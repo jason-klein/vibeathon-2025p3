@@ -40,4 +40,9 @@ class HealthcareProvider extends Model
     {
         return $this->hasMany(HealthcareProviderAvailability::class);
     }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(PatientAppointment::class);
+    }
 }

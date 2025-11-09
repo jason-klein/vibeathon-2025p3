@@ -14,9 +14,9 @@ class PatientAppointment extends Model
 
     protected $fillable = [
         'patient_id',
+        'healthcare_provider_id',
         'date',
         'time',
-        'partner',
         'location',
         'summary',
         'patient_notes',
@@ -34,6 +34,11 @@ class PatientAppointment extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function provider(): BelongsTo
+    {
+        return $this->belongsTo(HealthcareProvider::class, 'healthcare_provider_id');
     }
 
     public function scheduledFromTask(): BelongsTo
