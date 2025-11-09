@@ -1,0 +1,15 @@
+services:
+    web:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        # Bind-mount your project so edits reflect immediately
+        volumes:
+            - ./:/var/www/html
+        ports:
+            # Set APP_PORT in your .env (or export it). Defaults shown prevent conflicts.
+            - "${APP_PORT:-8081}:80"
+        environment:
+            # Laravel will read its own .env; nothing required here.
+            # You can set APP_ENV, etc., if you like.
+            APP_ENV: ${APP_ENV:-local}
