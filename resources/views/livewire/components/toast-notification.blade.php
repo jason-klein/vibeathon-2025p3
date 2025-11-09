@@ -1,7 +1,7 @@
 <?php
 
-use function Livewire\Volt\state;
 use function Livewire\Volt\on;
+use function Livewire\Volt\state;
 
 state(['show' => false]);
 state(['message' => '']);
@@ -41,7 +41,7 @@ $hide = function () {
     x-transition:leave="transition ease-in duration-100"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
-    @toast.window="autoHide()"
+    @toast.window="$wire.showToast($event.detail.message, $event.detail.type); autoHide()"
     class="pointer-events-none fixed inset-0 z-50 flex items-end justify-center px-4 py-6 sm:items-start sm:justify-end sm:p-6"
     style="display: none;"
 >

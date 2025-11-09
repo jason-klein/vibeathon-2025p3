@@ -17,7 +17,11 @@ class PatientTaskFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'description' => fake()->sentence(),
+            'instructions' => fake()->optional()->paragraph(),
+            'is_scheduling_task' => fake()->boolean(30), // 30% scheduling tasks
+            'provider_specialty_needed' => null,
+            'completed_at' => null,
         ];
     }
 }

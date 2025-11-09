@@ -1,11 +1,10 @@
 <?php
 
+use App\Models\HealthcareProvider;
 use App\Models\Patient;
 use App\Models\PatientTask;
-use App\Models\HealthcareProvider;
 use App\Support\Helpers\DistanceCalculator;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
 use function Livewire\Volt\computed;
 use function Livewire\Volt\layout;
@@ -26,11 +25,11 @@ mount(function ($taskId) {
     $task = PatientTask::find($taskId);
     $patient = Patient::where('user_id', Auth::id())->first();
 
-    if (!$task || !$patient || $task->patient_id !== $patient->id) {
+    if (! $task || ! $patient || $task->patient_id !== $patient->id) {
         abort(404);
     }
 
-    if (!$task->is_scheduling_task) {
+    if (! $task->is_scheduling_task) {
         abort(404, 'This is not a scheduling task');
     }
 });
@@ -67,6 +66,7 @@ $preferredProviders = computed(function () {
             $provider->latitude,
             $provider->longitude
         );
+
         return $provider;
     })->sortBy('distance');
 });
@@ -94,6 +94,7 @@ $otherProviders = computed(function () {
             $provider->latitude,
             $provider->longitude
         );
+
         return $provider;
     })->sortBy('distance');
 });
@@ -117,7 +118,7 @@ $availability = computed(function () {
             $slots->push([
                 'date' => $currentDate->format('Y-m-d'),
                 'time' => sprintf('%02d:%02d:00', $hour, $minute),
-                'display' => $currentDate->format('M j') . ' ' . sprintf('%d:%02d %s',
+                'display' => $currentDate->format('M j').' '.sprintf('%d:%02d %s',
                     $hour > 12 ? $hour - 12 : $hour,
                     $minute,
                     $hour >= 12 ? 'PM' : 'AM'
@@ -160,10 +161,7 @@ $bookAppointment = function ($providerId, $date, $time) {
     $appointmentTime = \Carbon\Carbon::parse($time)->format('g:i A');
 
     // Show success toast
-    $this->dispatch('toast', [
-        'message' => "Appointment scheduled for {$appointmentDate} at {$appointmentTime} with {$provider->name}",
-        'type' => 'success',
-    ]);
+    $this->dispatch('toast', "Appointment scheduled for {$appointmentDate} at {$appointmentTime} with {$provider->name}", 'success');
 
     // Redirect after a short delay to allow toast to be seen
     $this->dispatch('redirect-after-delay', route('appointments.index'));

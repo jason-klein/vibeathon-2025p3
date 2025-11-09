@@ -17,7 +17,8 @@ class HealthcareSystemFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->company().' Health System',
+            'is_preferred' => false,
         ];
     }
 }
