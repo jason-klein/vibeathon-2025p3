@@ -4,22 +4,24 @@ use App\Models\CommunityEvent;
 use App\Models\Patient;
 use App\Support\Helpers\DistanceCalculator;
 use Illuminate\Support\Facades\Auth;
-use function Livewire\Volt\{state, computed};
+
+use function Livewire\Volt\computed;
+use function Livewire\Volt\state;
 
 state(['patient' => function () {
     $user = Auth::user();
-    if (!$user->patient) {
+    if (! $user->patient) {
         return null;
     }
 
     return Patient::with([
-        'appointments' => fn($q) => $q->where('date', '>=', today())->orderBy('date')->orderBy('time')->limit(3)->with('provider.system'),
-        'tasks' => fn($q) => $q->whereNull('completed_at')->orderBy('created_at', 'desc')->limit(5)->with('scheduledAppointment'),
+        'appointments' => fn ($q) => $q->where('date', '>=', today())->orderBy('date')->orderBy('time')->limit(3)->with('provider.system'),
+        'tasks' => fn ($q) => $q->whereNull('completed_at')->orderBy('created_at', 'desc')->limit(5)->with('scheduledAppointment'),
     ])->find($user->patient->id);
 }]);
 
-state(['upcomingAppointmentsCount' => fn() => Auth::user()->patient?->appointments()->where('date', '>=', today())->count() ?? 0]);
-state(['activeTasksCount' => fn() => Auth::user()->patient?->tasks()->whereNull('completed_at')->count() ?? 0]);
+state(['upcomingAppointmentsCount' => fn () => Auth::user()->patient?->appointments()->where('date', '>=', today())->count() ?? 0]);
+state(['activeTasksCount' => fn () => Auth::user()->patient?->tasks()->whereNull('completed_at')->count() ?? 0]);
 
 $communityEvents = computed(function () {
     $patient = $this->patient;
@@ -56,19 +58,25 @@ $communityEvents = computed(function () {
 
         // Filter out common words
         $commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'from', 'by', 'of', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can'];
-        $keywords = $keywords->filter(fn($word) => strlen($word) > 3 && !in_array($word, $commonWords))->unique();
+        $keywords = $keywords->filter(fn ($word) => strlen($word) > 3 && ! in_array($word, $commonWords))->unique();
 
         // Filter events based on keywords
         if ($keywords->isNotEmpty()) {
-            $events = $events->filter(function ($event) use ($keywords) {
-                $eventText = strtolower($event->description . ' ' . $event->partner->name);
+            $filteredEvents = $events->filter(function ($event) use ($keywords) {
+                $eventText = strtolower($event->description.' '.$event->partner->name);
                 foreach ($keywords as $keyword) {
                     if (str_contains($eventText, $keyword)) {
                         return true;
                     }
                 }
+
                 return false;
             });
+
+            // If we found matching events, use them; otherwise show all events
+            if ($filteredEvents->isNotEmpty()) {
+                $events = $filteredEvents;
+            }
         }
     }
 
@@ -77,7 +85,7 @@ $communityEvents = computed(function () {
 
 $calculateDistance = function ($appointment) {
     $patient = $this->patient;
-    if (!$patient || !$appointment->provider) {
+    if (! $patient || ! $appointment->provider) {
         return null;
     }
 
@@ -89,7 +97,7 @@ $calculateDistance = function ($appointment) {
     );
 };
 
-$formatDistance = fn($distance) => DistanceCalculator::format($distance);
+$formatDistance = fn ($distance) => DistanceCalculator::format($distance);
 
 ?>
 <div class="flex h-full w-full flex-1 flex-col gap-6">
@@ -313,7 +321,7 @@ $formatDistance = fn($distance) => DistanceCalculator::format($distance);
                 @if($this->communityEvents->count() > 0)
                     <div class="space-y-4">
                         @foreach($this->communityEvents as $event)
-                            <div class="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+                            <a href="{{ route('events.show', $event->id) }}" class="block rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:hover:border-zinc-600">
                                 <div class="flex items-start justify-between">
                                     <div class="flex-1">
                                         <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ $event->partner->name }}</p>
@@ -345,7 +353,7 @@ $formatDistance = fn($distance) => DistanceCalculator::format($distance);
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         @endforeach
                     </div>
                 @else

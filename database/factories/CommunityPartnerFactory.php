@@ -17,7 +17,9 @@ class CommunityPartnerFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->company(),
+            'is_nonprofit' => fake()->boolean(),
+            'is_sponsor' => fake()->boolean(),
         ];
     }
 }

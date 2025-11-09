@@ -94,6 +94,7 @@ class ImportCommunityEvents extends Command
                 'time' => $eventTime,
                 'location' => $data['location'],
                 'description' => $this->cleanDescription($data['description']),
+                'link' => ! empty($data['url']) && filter_var($data['url'], FILTER_VALIDATE_URL) ? $data['url'] : null,
                 'is_partner_provided' => true,
             ]);
 

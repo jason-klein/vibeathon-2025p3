@@ -1,25 +1,27 @@
 <?php
 
 use App\Models\Patient;
-use App\Models\PatientAppointment;
 use Illuminate\Support\Facades\Auth;
-use function Livewire\Volt\{state, computed, layout, title};
+
+use function Livewire\Volt\computed;
+use function Livewire\Volt\layout;
+use function Livewire\Volt\title;
 
 layout('components.layouts.app');
 title('Your Health Timeline');
 
 $patient = computed(function () {
     $user = Auth::user();
-    if (!$user->patient) {
+    if (! $user->patient) {
         return null;
     }
 
     return Patient::with([
-        'appointments' => fn($q) => $q
+        'appointments' => fn ($q) => $q
             ->where('date', '<', today())
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc')
-            ->with(['provider.system', 'documents', 'tasks' => fn($tq) => $tq->orderBy('created_at', 'desc')]),
+            ->with(['provider.system', 'documents', 'tasks' => fn ($tq) => $tq->orderBy('created_at', 'desc')]),
     ])->find($user->patient->id);
 });
 
@@ -136,9 +138,9 @@ $patient = computed(function () {
 
                                 {{-- Visit Summary --}}
                                 @if($appointment->summary)
-                                    <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
-                                        <h4 class="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">Visit Summary</h4>
-                                        <p class="whitespace-pre-wrap text-sm text-zinc-900 dark:text-zinc-100">
+                                    <div class="rounded-lg border border-zinc-300 bg-white p-4 shadow-sm dark:border-zinc-600 dark:bg-zinc-800">
+                                        <h4 class="mb-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">Visit Summary</h4>
+                                        <p class="whitespace-pre-wrap text-sm leading-relaxed text-zinc-950 dark:text-white">
                                             {{ $appointment->summary }}
                                         </p>
                                     </div>
@@ -146,9 +148,9 @@ $patient = computed(function () {
 
                                 {{-- Patient Notes --}}
                                 @if($appointment->patient_notes)
-                                    <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
-                                        <h4 class="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">My Notes</h4>
-                                        <p class="whitespace-pre-wrap text-sm text-zinc-900 dark:text-zinc-100">
+                                    <div class="rounded-lg border border-zinc-300 bg-white p-4 shadow-sm dark:border-zinc-600 dark:bg-zinc-800">
+                                        <h4 class="mb-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">My Notes</h4>
+                                        <p class="whitespace-pre-wrap text-sm leading-relaxed text-zinc-950 dark:text-white">
                                             {{ $appointment->patient_notes }}
                                         </p>
                                     </div>

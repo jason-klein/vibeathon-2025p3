@@ -17,7 +17,13 @@ class CommunityEventFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'community_partner_id' => \App\Models\CommunityPartner::factory(),
+            'date' => fake()->dateTimeBetween('now', '+3 months'),
+            'time' => fake()->time(),
+            'location' => fake()->address(),
+            'description' => fake()->paragraph(),
+            'link' => fake()->optional(0.6)->url(),
+            'is_partner_provided' => fake()->boolean(),
         ];
     }
 }

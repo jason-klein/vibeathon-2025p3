@@ -43,6 +43,10 @@ Route::middleware(['auth'])->group(function () {
             abort(404);
         }
 
+        if (! Storage::disk('public')->exists($document->file_path)) {
+            abort(404, 'File not found');
+        }
+
         return Storage::disk('public')->download($document->file_path);
     })->name('appointments.documents.download');
 
@@ -60,6 +64,9 @@ Route::middleware(['auth'])->group(function () {
 
     Volt::route('tasks/{taskId}/schedule', 'tasks.schedule')
         ->name('tasks.schedule');
+
+    Volt::route('events/{eventId}', 'events.show')
+        ->name('events.show');
 
     // Settings
     Route::redirect('settings', 'settings/profile');

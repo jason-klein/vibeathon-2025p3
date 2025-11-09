@@ -17,6 +17,7 @@ class CommunityEvent extends Model
         'time',
         'location',
         'description',
+        'link',
         'is_partner_provided',
     ];
 

@@ -663,11 +663,11 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Performance optimization
 
 **Testing Checklist:**
-- [ ] User can view event details
-- [ ] Event feed shows relevant events based on appointments/tasks
-- [ ] No N+1 query problems in event feed
-- [ ] Event details display correctly
-- [ ] Feature test passes
+- [X] User can view event details
+- [X] Event feed shows relevant events based on appointments/tasks
+- [X] No N+1 query problems in event feed
+- [X] Event details display correctly
+- [X] Feature test passes
 
 ---
 
