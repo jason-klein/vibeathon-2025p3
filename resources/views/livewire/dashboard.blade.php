@@ -143,7 +143,7 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Health Journey</p>
-                        <p class="mt-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">On Track</p>
+                        <p class="mt-2 text-3xl font-semibold text-zinc-900 dark:text-zinc-100">On Track</p>
                     </div>
                     <div class="rounded-full bg-purple-100 p-3 dark:bg-purple-900/30">
                         <svg class="size-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
