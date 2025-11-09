@@ -116,6 +116,14 @@ $toggleComplete = function ($taskId) {
                                                 </svg>
                                                 Scheduling Task
                                             </span>
+                                            @if(!$task->scheduledAppointment)
+                                                <a href="{{ route('tasks.schedule', $task->id) }}" class="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
+                                                    <svg class="-ml-0.5 mr-1.5 size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                    Schedule
+                                                </a>
+                                            @endif
                                         @endif
 
                                         @if($task->provider_specialty_needed)

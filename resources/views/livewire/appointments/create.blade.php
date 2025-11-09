@@ -193,7 +193,7 @@ $save = function () {
                     <div class="mt-3 space-y-2">
                         @foreach($documents as $index => $document)
                             @if($document instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)
-                                <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900/50">
+                                <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800">
                                     <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                         {{ $document->getClientOriginalName() }}
                                     </span>

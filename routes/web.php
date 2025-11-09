@@ -27,6 +27,9 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('tasks', 'tasks.index')
         ->name('tasks.index');
 
+    Volt::route('tasks/{taskId}/schedule', 'tasks.schedule')
+        ->name('tasks.schedule');
+
     // Settings
     Route::redirect('settings', 'settings/profile');
 

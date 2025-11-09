@@ -137,7 +137,7 @@ $appointments = computed(function () {
                             @endif
 
                             @if($appointment->patient_notes)
-                                <div class="mt-3 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900/50">
+                                <div class="mt-3 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800">
                                     <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">My Notes</p>
                                     <p class="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{{ $appointment->patient_notes }}</p>
                                 </div>
