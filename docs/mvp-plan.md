@@ -68,6 +68,7 @@ The MVP should:
 ### patient_tasks
 - `id`
 - `patient_id` (FK → patients)
+- `patient_appointment_id` (FK → patient_appointments, nullable) - Tasks may optionally belong to an appointment
 - `description` (string)
 - `instructions` (text, nullable)
 - `completed_at` (timestamp, nullable)
@@ -147,6 +148,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 **Pending Tasks**
 - Clickable list of incomplete tasks
+- Show appointment link if task is related to an appointment
 - Checkbox to mark complete
 - "View All Tasks" button
 
@@ -188,6 +190,11 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Show attached documents (filename + summary)
   - Click to download/view
 - Edit notes in-place (using Livewire for interactivity)
+- **Related Tasks Section:**
+  - Display list of tasks related to this appointment
+  - Show task description and completion status (checkbox)
+  - Allow marking tasks as complete/incomplete inline
+  - "Add Task" button to create a new task linked to this appointment
 - "Edit Appointment" button
 - "Delete Appointment" button (with confirmation)
 
@@ -197,19 +204,24 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 **List View:**
 - All tasks (pending and completed)
+- Show if task is linked to an appointment (with link to appointment details)
 - Filter: Show completed / Show pending
 - "Add New Task" button
 
 **Add Task Form:**
 - Description (required)
 - Instructions (optional)
+- Optional: Link to appointment (dropdown of appointments)
 
 **Task Details:**
 - Display description and instructions
+- Show linked appointment (if any) with link to appointment details
 - "Mark as Complete" button (if not completed)
 - "Mark as Incomplete" button (if completed)
 - "Edit Task" button
 - "Delete Task" button (with confirmation)
+
+**Note:** Tasks can be created from either the Task Manager OR directly from an Appointment Details page
 
 ---
 
@@ -262,7 +274,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 1. Create migration for `patients` table
 2. Create migration for `patient_appointments` table
 3. Create migration for `patient_appointment_documents` table
-4. Create migration for `patient_tasks` table
+4. Create migration for `patient_tasks` table (include nullable `patient_appointment_id` foreign key)
 5. Create migration for `community_partners` table
 6. Create migration for `community_events` table
 7. Create migration for `healthcare_systems` table
@@ -370,65 +382,77 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 ---
 
 ### Milestone 6: Appointment Manager - View, Edit, Delete
-**Goal:** Complete CRUD operations for appointments
+**Goal:** Complete CRUD operations for appointments and add task management to appointments
 
 **Tasks:**
 1. Create appointment details page
 2. Display all appointment information
 3. Show attached documents with download links
-4. Add edit appointment form (pre-filled with existing data)
-5. Implement delete appointment with confirmation modal
-6. Allow in-place editing of patient notes using Livewire
-7. Update authorization policies
-8. Create feature tests for edit and delete
+4. Display related tasks (linked to this appointment)
+5. Allow marking tasks as complete/incomplete inline on appointment page
+6. Add "Add Task" functionality to create tasks linked to the appointment
+7. Add edit appointment form (pre-filled with existing data)
+8. Implement delete appointment with confirmation modal
+9. Allow in-place editing of patient notes using Livewire
+10. Update authorization policies
+11. Create feature tests for edit, delete, and task management
 
 **Deliverables:**
-- Appointment details view
+- Appointment details view with related tasks
+- Task management on appointment page (view, add, complete/incomplete)
 - Edit appointment functionality
 - Delete appointment with confirmation
 - In-place notes editing
 
 **Testing Checklist:**
 - [ ] User can view appointment details
+- [ ] Related tasks display correctly on appointment page
+- [ ] User can add new task linked to appointment
+- [ ] User can mark tasks as complete/incomplete from appointment page
 - [ ] User can edit existing appointment
 - [ ] User can delete appointment (with confirmation)
 - [ ] Patient notes can be edited in-place
 - [ ] Documents display and can be downloaded
 - [ ] Authorization prevents accessing other users' appointments
-- [ ] Feature tests pass
+- [ ] Feature tests pass for all appointment and task operations
 
 ---
 
 ### Milestone 7: Task Manager
-**Goal:** Implement complete CRUD for patient tasks
+**Goal:** Implement complete CRUD for patient tasks with optional appointment linking
 
 **Tasks:**
 1. Create Task index page (list all tasks)
 2. Add filter to show completed/pending tasks
-3. Create "Add Task" form with Livewire Volt
-4. Implement task validation (Form Request)
-5. Create task details page
-6. Add "Mark as Complete/Incomplete" functionality
-7. Implement edit task form
-8. Implement delete task with confirmation
-9. Create authorization policy for tasks
-10. Create feature tests for all task operations
+3. Show appointment link on task list (if task is linked to appointment)
+4. Create "Add Task" form with Livewire Volt
+5. Add optional appointment dropdown to task form
+6. Implement task validation (Form Request)
+7. Create task details page
+8. Display linked appointment on task details (if applicable)
+9. Add "Mark as Complete/Incomplete" functionality
+10. Implement edit task form (including ability to link/unlink appointment)
+11. Implement delete task with confirmation
+12. Create authorization policy for tasks
+13. Create feature tests for all task operations (including appointment linking)
 
 **Deliverables:**
-- Task list page with filtering
-- Complete CRUD for tasks
+- Task list page with filtering and appointment links
+- Complete CRUD for tasks with appointment linking
 - Mark complete/incomplete functionality
 - Form validation
 
 **Testing Checklist:**
 - [ ] User can view all their tasks
+- [ ] Tasks show linked appointment (if applicable)
 - [ ] User can filter by pending/completed
-- [ ] User can create new task
+- [ ] User can create new task with optional appointment link
+- [ ] User can create task from appointment page (tested in Milestone 6)
 - [ ] User can mark task as complete/incomplete
-- [ ] User can edit existing task
+- [ ] User can edit existing task and change appointment link
 - [ ] User can delete task (with confirmation)
 - [ ] User can only see their own tasks
-- [ ] Feature tests pass
+- [ ] Feature tests pass for all scenarios
 
 ---
 
@@ -718,5 +742,11 @@ These features can be added after MVP launch:
 ---
 
 **Last Updated:** 2025-11-08
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Ready for Development
+
+**Changelog:**
+- v1.1: Added `patient_appointment_id` to tasks table, allowing tasks to optionally belong to appointments
+- v1.1: Updated Appointment Details page to display related tasks and allow adding tasks
+- v1.1: Enhanced Task Manager to support appointment linking
+- v1.0: Initial MVP plan created
