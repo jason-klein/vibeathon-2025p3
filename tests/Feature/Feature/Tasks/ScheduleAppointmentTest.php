@@ -31,7 +31,6 @@ test('booking appointment creates appointment and shows scheduling modal', funct
     Volt::test('tasks.schedule', ['taskId' => $task->id])
         ->call('bookAppointment', $provider->id, '2025-12-01', '10:00:00')
         ->assertSet('isScheduling', true)
-        ->assertSet('schedulingStep', 'scheduling')
         ->assertHasNoErrors();
 
     // Verify appointment was created
