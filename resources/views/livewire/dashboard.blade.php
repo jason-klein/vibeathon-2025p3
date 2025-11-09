@@ -276,7 +276,7 @@ $formatDistance = fn($distance) => DistanceCalculator::format($distance);
                     </div>
                     <div class="flex-1">
                         <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Your Health Story in Plain English</h2>
-                        <p class="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{{ Str::limit($patient->executive_summary, 200) }}</p>
+                        <div class="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{!! nl2br(e($patient->executive_summary)) !!}</div>
                         @if($patient->executive_summary_updated_at)
                             <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Last updated {{ $patient->executive_summary_updated_at->diffForHumans() }}</p>
                         @endif

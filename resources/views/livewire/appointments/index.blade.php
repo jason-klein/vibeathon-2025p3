@@ -1,15 +1,21 @@
 <?php
 
-use App\Models\PatientAppointment;
 use Illuminate\Support\Facades\Auth;
-use function Livewire\Volt\{computed, state};
+
+use function Livewire\Volt\computed;
+use function Livewire\Volt\layout;
+use function Livewire\Volt\state;
+use function Livewire\Volt\title;
+
+layout('components.layouts.app');
+title('Appointments');
 
 state(['filter' => 'upcoming']);
 
 $appointments = computed(function () {
     $patient = Auth::user()->patient;
 
-    if (!$patient) {
+    if (! $patient) {
         return collect();
     }
 
@@ -29,8 +35,7 @@ $appointments = computed(function () {
 
 ?>
 
-<x-layouts.app :title="__('Appointments')">
-    <div class="flex h-full w-full flex-1 flex-col gap-6">
+<div class="flex h-full w-full flex-1 flex-col gap-6">
         {{-- Header --}}
         <div class="flex items-center justify-between">
             <div>
@@ -178,5 +183,4 @@ $appointments = computed(function () {
                 </div>
             @endforelse
         </div>
-    </div>
-</x-layouts.app>
+</div>
