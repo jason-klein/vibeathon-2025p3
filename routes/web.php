@@ -45,6 +45,15 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('tasks', 'tasks.index')
         ->name('tasks.index');
 
+    Volt::route('tasks/create', 'tasks.create')
+        ->name('tasks.create');
+
+    Volt::route('tasks/{taskId}', 'tasks.show')
+        ->name('tasks.show');
+
+    Volt::route('tasks/{taskId}/edit', 'tasks.edit')
+        ->name('tasks.edit');
+
     Volt::route('tasks/{taskId}/schedule', 'tasks.schedule')
         ->name('tasks.schedule');
 

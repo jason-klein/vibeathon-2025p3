@@ -584,16 +584,16 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Form validation
 
 **Testing Checklist:**
-- [ ] User can view all their tasks
-- [ ] Tasks show linked appointment (if applicable)
-- [ ] User can filter by pending/completed
-- [ ] User can create new task with optional appointment link
-- [ ] User can create task from appointment page (tested in Milestone 8)
-- [ ] User can mark task as complete/incomplete
-- [ ] User can edit existing task and change appointment link
-- [ ] User can delete task (with confirmation)
-- [ ] User can only see their own tasks
-- [ ] Feature tests pass for all scenarios
+- [X] User can view all their tasks
+- [X] Tasks show linked appointment (if applicable)
+- [X] User can filter by pending/completed
+- [X] User can create new task with optional appointment link
+- [X] User can create task from appointment page (tested in Milestone 8)
+- [X] User can mark task as complete/incomplete
+- [X] User can edit existing task and change appointment link
+- [X] User can delete task (with confirmation)
+- [X] User can only see their own tasks
+- [X] Feature tests pass for all scenarios
 
 ---
 

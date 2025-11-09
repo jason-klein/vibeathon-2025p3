@@ -52,6 +52,9 @@ $toggleComplete = function ($taskId) {
                 <h1 class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">My Tasks</h1>
                 <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Track and complete your healthcare tasks</p>
             </div>
+            <flux:button variant="primary" href="{{ route('tasks.create') }}" icon="plus">
+                Add Task
+            </flux:button>
         </div>
 
         {{-- Filter Tabs --}}
@@ -81,11 +84,14 @@ $toggleComplete = function ($taskId) {
         {{-- Tasks List --}}
         <div class="space-y-3">
             @forelse($this->tasks as $task)
-                <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800 {{ $task->completed_at ? 'opacity-75' : '' }}">
+                <a
+                    href="{{ route('tasks.show', $task) }}"
+                    class="block rounded-xl border border-zinc-200 bg-white p-6 transition-shadow hover:shadow-lg dark:border-zinc-700 dark:bg-zinc-800 dark:hover:shadow-zinc-900/50 {{ $task->completed_at ? 'opacity-75' : '' }}"
+                >
                     <div class="flex items-start gap-4">
                         {{-- Checkbox --}}
                         <button
-                            wire:click="toggleComplete({{ $task->id }})"
+                            wire:click.stop="toggleComplete({{ $task->id }})"
                             class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded border-2 transition-colors {{ $task->completed_at ? 'border-green-600 bg-green-600' : 'border-zinc-300 hover:border-green-600 dark:border-zinc-600 dark:hover:border-green-600' }}"
                         >
                             @if($task->completed_at)
@@ -117,7 +123,7 @@ $toggleComplete = function ($taskId) {
                                                 Scheduling Task
                                             </span>
                                             @if(!$task->scheduledAppointment)
-                                                <a href="{{ route('tasks.schedule', $task->id) }}" class="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
+                                                <a href="{{ route('tasks.schedule', $task->id) }}" onclick="event.stopPropagation();" class="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
                                                     <svg class="-ml-0.5 mr-1.5 size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                     </svg>
@@ -157,7 +163,7 @@ $toggleComplete = function ($taskId) {
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             @empty
                 <div class="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white py-12 dark:border-zinc-700 dark:bg-zinc-800">
                     <svg class="size-16 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
