@@ -112,7 +112,7 @@ $toggleComplete = function ($taskId) {
                             wire:click.stop="toggleComplete({{ $task->id }})"
                             wire:loading.attr="disabled"
                             wire:target="toggleComplete({{ $task->id }})"
-                            class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded border-2 transition-colors {{ $task->completed_at ? 'border-green-600 bg-green-600' : 'border-zinc-300 hover:border-green-600 dark:border-zinc-600 dark:hover:border-green-600' }}"
+                            class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded border-2 transition-colors {{ $task->completed_at ? 'border-green-600 bg-green-600' : 'border-zinc-900 bg-white hover:border-green-600 dark:border-zinc-300 dark:bg-zinc-800 dark:hover:border-green-600' }}"
                         >
                             <span wire:loading.remove wire:target="toggleComplete({{ $task->id }})">
                                 @if($task->completed_at)
@@ -164,8 +164,15 @@ $toggleComplete = function ($taskId) {
                                         @endif
 
                                         @if($task->appointment)
-                                            <span class="inline-flex items-center text-xs text-zinc-600 dark:text-zinc-400">
-                                                Related to: {{ $task->appointment->provider?->name ?? 'Appointment' }}
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
+                                                <svg class="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                @if($task->appointment->provider)
+                                                    {{ $task->appointment->provider->name }} - {{ $task->appointment->date->format('M j, Y') }}
+                                                @else
+                                                    Appointment on {{ $task->appointment->date->format('M j, Y') }}
+                                                @endif
                                             </span>
                                         @endif
 

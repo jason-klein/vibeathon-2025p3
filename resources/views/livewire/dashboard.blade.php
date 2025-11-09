@@ -10,14 +10,16 @@ use function Livewire\Volt\state;
 
 state(['patient' => function () {
     $user = Auth::user();
-    if (! $user->patient) {
+    $patient = Patient::where('user_id', $user->id)->first();
+
+    if (! $patient) {
         return null;
     }
 
     return Patient::with([
         'appointments' => fn ($q) => $q->where('date', '>=', today())->orderBy('date')->orderBy('time')->limit(3)->with('provider.system'),
         'tasks' => fn ($q) => $q->whereNull('completed_at')->orderBy('created_at', 'desc')->limit(5)->with('scheduledAppointment'),
-    ])->find($user->patient->id);
+    ])->find($patient->id);
 }]);
 
 state(['upcomingAppointmentsCount' => fn () => Auth::user()->patient?->appointments()->where('date', '>=', today())->count() ?? 0]);

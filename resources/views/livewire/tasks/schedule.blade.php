@@ -23,7 +23,7 @@ mount(function ($taskId) {
 
     // Verify task belongs to user
     $task = PatientTask::find($taskId);
-    $patient = Auth::user()->patient;
+    $patient = Patient::where('user_id', Auth::id())->first();
 
     if (!$task || !$patient || $task->patient_id !== $patient->id) {
         abort(404);
@@ -40,7 +40,7 @@ $task = computed(function () {
 });
 
 $patient = computed(function () {
-    return Auth::user()->patient;
+    return Patient::where('user_id', Auth::id())->first();
 });
 
 $preferredProviders = computed(function () {
@@ -97,12 +97,9 @@ $otherProviders = computed(function () {
     })->sortBy('distance');
 });
 
-$selectProvider = function ($providerId) {
-    $this->selectedProviderId = $providerId;
-};
-
-$generateAvailability = function ($provider) {
+$availability = computed(function () {
     // Generate mock availability slots for the next 2 weeks (weekdays only)
+    // Returns same slots for consistency within a request
     $slots = collect();
     $startDate = now()->addDay();
     $endDate = now()->addWeeks(2);
@@ -131,6 +128,10 @@ $generateAvailability = function ($provider) {
     }
 
     return $slots;
+});
+
+$selectProvider = function ($providerId) {
+    $this->selectedProviderId = $providerId;
 };
 
 $bookAppointment = function ($providerId, $date, $time) {
@@ -271,7 +272,7 @@ $bookAppointment = function ($providerId, $date, $time) {
                         <div class="border-t border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-700 dark:bg-zinc-800">
                             <p class="mb-3 text-sm font-medium text-zinc-900 dark:text-zinc-100">Available Times:</p>
                             <div class="flex flex-wrap gap-2">
-                                @foreach($this->generateAvailability($provider) as $slot)
+                                @foreach($this->availability as $slot)
                                     <button
                                         wire:click="bookAppointment({{ $provider->id }}, '{{ $slot['date'] }}', '{{ $slot['time'] }}')"
                                         type="button"

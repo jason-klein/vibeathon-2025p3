@@ -730,12 +730,12 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 **Testing Checklist:**
 - [ ] All feature tests pass
-- [ ] All unit tests pass
-- [ ] Code formatted with Pint
-- [ ] No N+1 query issues
-- [ ] File uploads tested
-- [ ] Edge cases covered
-- [ ] Authorization tests pass
+- [X] All unit tests pass
+- [X] Code formatted with Pint
+- [ ] No N+1 query issues (not tested in this milestone)
+- [X] File uploads tested (covered in appointment tests)
+- [X] Edge cases covered (validation, authorization tests passing)
+- [X] Authorization tests pass
 
 ---
 
