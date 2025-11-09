@@ -11,7 +11,11 @@ use function Livewire\Volt\title;
 layout('components.layouts.app');
 title('Tasks');
 
-state(['filter' => 'active']);
+state([
+    'filter' => 'active',
+    'showSchedulingTaskConfirmation' => false,
+    'taskToComplete' => null,
+]);
 
 $tasks = computed(function () {
     $patient = Auth::user()->patient;
@@ -32,15 +36,46 @@ $tasks = computed(function () {
 });
 
 $toggleComplete = function ($taskId) {
-    $task = PatientTask::findOrFail($taskId);
+    $task = PatientTask::with('scheduledAppointment')->findOrFail($taskId);
 
     if ($task->patient_id !== Auth::user()->patient->id) {
+        return;
+    }
+
+    // If marking complete and it's a scheduling task without a scheduled appointment, show confirmation
+    if (!$task->completed_at && $task->is_scheduling_task && !$task->scheduledAppointment) {
+        $this->taskToComplete = $taskId;
+        $this->showSchedulingTaskConfirmation = true;
         return;
     }
 
     $task->update([
         'completed_at' => $task->completed_at ? null : now(),
     ]);
+};
+
+$confirmComplete = function () {
+    if (!$this->taskToComplete) {
+        return;
+    }
+
+    $task = PatientTask::findOrFail($this->taskToComplete);
+
+    if ($task->patient_id !== Auth::user()->patient->id) {
+        return;
+    }
+
+    $task->update([
+        'completed_at' => now(),
+    ]);
+
+    $this->showSchedulingTaskConfirmation = false;
+    $this->taskToComplete = null;
+};
+
+$cancelComplete = function () {
+    $this->showSchedulingTaskConfirmation = false;
+    $this->taskToComplete = null;
 };
 
 ?>
@@ -224,4 +259,37 @@ $toggleComplete = function ($taskId) {
                 </div>
             @endforelse
         </div>
+
+    {{-- Scheduling Task Confirmation Modal --}}
+    <flux:modal wire:model="showSchedulingTaskConfirmation" name="scheduling-task-confirmation">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Schedule This Task Instead?</flux:heading>
+                <flux:subheading>
+                    This is a scheduling task that hasn't been scheduled yet. We recommend using the "Schedule" button to book an appointment rather than marking it complete.
+                </flux:subheading>
+            </div>
+
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                <div class="flex items-start gap-3">
+                    <svg class="size-5 shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p class="text-sm text-amber-900 dark:text-amber-200">
+                        Are you sure you want to mark this as complete without scheduling the appointment?
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                <flux:button type="button" variant="ghost" wire:click="cancelComplete">
+                    Cancel
+                </flux:button>
+                <flux:button type="button" variant="primary" wire:click="confirmComplete" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="confirmComplete">Yes, Mark Complete</span>
+                    <span wire:loading wire:target="confirmComplete">Marking Complete...</span>
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>
