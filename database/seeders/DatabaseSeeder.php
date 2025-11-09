@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
         $user = User::factory()->withoutTwoFactor()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'password' => bcrypt('password#1'),
         ]);
 
         // Create healthcare systems
@@ -103,6 +104,7 @@ class DatabaseSeeder extends Seeder
         $jesse = User::factory()->withoutTwoFactor()->create([
             'name' => 'Jesse Wolffe',
             'email' => 'jesse@example.com',
+            'password' => bcrypt('password#1'),
         ]);
 
         $this->createJesseHealthcareJourney($jesse->patient);
