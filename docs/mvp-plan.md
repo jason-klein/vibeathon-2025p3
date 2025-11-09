@@ -45,6 +45,11 @@ The MVP should:
 - `id`
 - `user_id` (FK → users)
 - `summary` (text, nullable) - Health summary/notes
+- `latitude` (decimal, nullable) - Patient location for distance calculations
+- `longitude` (decimal, nullable) - Patient location for distance calculations
+- `plain_english_record` (text, nullable) - AI-generated cumulative health history from all past appointments
+- `executive_summary` (text, nullable) - Most recent AI-generated health status summary
+- `executive_summary_updated_at` (timestamp, nullable) - When executive summary was last generated
 - `created_at` / `updated_at`
 
 ### patient_appointments
@@ -56,7 +61,10 @@ The MVP should:
 - `location` (string, nullable)
 - `summary` (text, nullable)
 - `patient_notes` (text, nullable)
+- `scheduled_from_task_id` (FK → patient_tasks, nullable) - Links appointment to scheduling task
 - `created_at` / `updated_at`
+
+**Note:** Past appointments (date < today) function as healthcare encounters and contain visit summaries
 
 ### patient_appointment_documents
 - `id`
@@ -71,6 +79,8 @@ The MVP should:
 - `patient_appointment_id` (FK → patient_appointments, nullable) - Tasks may optionally belong to an appointment
 - `description` (string)
 - `instructions` (text, nullable)
+- `is_scheduling_task` (boolean, default false) - Identifies tasks like "Schedule MRI" that trigger scheduling workflow
+- `provider_specialty_needed` (string, nullable) - Specialty required for scheduling tasks (e.g., "Cardiology", "Radiology")
 - `completed_at` (timestamp, nullable)
 - `created_at` / `updated_at`
 
@@ -101,7 +111,10 @@ The MVP should:
 - `id`
 - `healthcare_system_id` (FK → healthcare_systems)
 - `name` (string)
+- `specialty` (string, nullable) - e.g., "Cardiology", "Radiology", "Family Medicine"
 - `location` (string)
+- `latitude` (decimal, nullable) - Provider location for distance calculations
+- `longitude` (decimal, nullable) - Provider location for distance calculations
 - `phone` (string, nullable)
 - `email` (string, nullable)
 - `created_at` / `updated_at`
@@ -321,28 +334,41 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 ---
 
 ### Milestone 4: Dashboard (Home Page)
-**Goal:** Build the authenticated user dashboard with appointments, tasks, and events
+**Goal:** Build the authenticated user dashboard with appointments, tasks, executive summary, and events
 
 **Tasks:**
 1. Create Dashboard controller/Volt component
 2. Build dashboard view using Flux UI components
-3. Display upcoming appointments (top 3)
-4. Display pending tasks
-5. Implement event feed with basic filtering logic
-6. Add "View All" navigation buttons
-7. Make appointment cards and task items clickable
-8. Create responsive layout for mobile and desktop
-9. Write feature test for dashboard
+3. Display upcoming appointments (top 3) with calculated distance from patient location
+4. Display pending tasks with "Schedule" button for scheduling tasks
+5. Create Executive Summary card (positioned between tasks and divider)
+   - Display most recent `executive_summary` from patient record
+   - Show `executive_summary_updated_at` date
+   - Make card clickable → links to `/timeline` page
+   - Style prominently to stand out
+6. Implement event feed with basic filtering logic
+7. Add "View All" navigation buttons
+8. Make appointment cards and task items clickable
+9. Create helper function for distance calculation (Haversine formula)
+10. Create responsive layout for mobile and desktop
+11. Write feature test for dashboard
 
 **Deliverables:**
-- Functional dashboard showing appointments, tasks, and events
+- Functional dashboard showing appointments, tasks, executive summary, and events
+- Provider distance calculation from patient coordinates
+- Executive Summary card with link to timeline
+- Scheduling task identification and "Schedule" buttons
 - Responsive design
 - Basic event filtering
 
 **Testing Checklist:**
 - [ ] Dashboard loads for authenticated user
-- [ ] Upcoming appointments display correctly (max 3)
+- [ ] Upcoming appointments display correctly (max 3) with distance
 - [ ] Pending tasks display correctly
+- [ ] Scheduling tasks show "Schedule" button
+- [ ] Executive Summary card displays between tasks and feed
+- [ ] Executive Summary card is clickable and links to `/timeline`
+- [ ] Distance calculation works correctly
 - [ ] Event feed shows relevant events
 - [ ] "View All" buttons navigate correctly
 - [ ] Mobile layout works properly
@@ -350,7 +376,67 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 5: Appointment Manager - List & Create
+### Milestone 5: Mock Healthcare Data Command
+**Goal:** Create command to generate realistic healthcare encounters with AI-powered summaries
+
+**Tasks:**
+1. Install and configure DomPDF for PDF generation
+2. Set up OpenAI API integration
+   - Add `OPENAI_API_KEY` to `.env` and `.env.example`
+   - Create service class for AI summary generation
+3. Create Artisan command: `php artisan mock:healthcare-encounter {patient_id}`
+4. Implement command logic for generating new family physician visits:
+   - Create past appointment (e.g., 2 weeks ago)
+   - Add visit summary and patient notes
+   - Generate realistic PDF visit summary document using DomPDF
+   - Create referral tasks (e.g., "Schedule Cardiology appointment")
+   - Optionally create future specialist appointments
+   - Create follow-up appointment with family physician
+5. Implement command logic for updating existing appointments:
+   - Convert future appointment to past appointment
+   - Add visit summary and documents
+   - Generate new referral tasks if applicable
+6. Implement AI summary generation:
+   - Call OpenAI API to generate Plain English Patient Record from all past appointments
+   - Call OpenAI API to generate Executive Summary
+   - Update patient record with both summaries
+   - Only regenerate when new past appointment is added
+7. Create PDF templates with official-looking format:
+   - Provider letterhead
+   - Patient demographics
+   - Visit date and chief complaint
+   - Assessment and plan
+   - Referrals section
+8. Seed database with Joplin, MO area coordinates:
+   - Center point: 37.0842° N, 94.5133° W
+   - Generate random coordinates for providers (~20 mile radius)
+   - Generate random coordinates for patients (~10 mile radius)
+9. Create feature tests for command
+10. Test various scenarios (new visit, update existing, with/without referrals)
+
+**Deliverables:**
+- Working Artisan command for generating mock encounters
+- DomPDF integration with professional-looking templates
+- OpenAI API integration for AI summaries
+- Seeded coordinates for Joplin area
+- Realistic sample data generation
+
+**Testing Checklist:**
+- [ ] Command runs successfully for given patient
+- [ ] Past appointments are created with summaries
+- [ ] PDF documents are generated and stored correctly
+- [ ] PDF documents look professional and realistic
+- [ ] Referral tasks are created appropriately
+- [ ] Plain English Patient Record is generated by AI
+- [ ] Executive Summary is generated by AI
+- [ ] Summaries only regenerate when new past appointment added
+- [ ] Patient coordinates are in Joplin area
+- [ ] Provider coordinates are in Joplin area
+- [ ] Feature tests pass for various scenarios
+
+---
+
+### Milestone 6: Appointment Manager - List & Create
 **Goal:** Allow users to view all appointments and create new ones
 
 **Tasks:**
@@ -381,7 +467,62 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 6: Appointment Manager - View, Edit, Delete
+### Milestone 7: Mock Scheduling Workflow
+**Goal:** Implement task-based appointment scheduling with provider selection and availability
+
+**Tasks:**
+1. Update Task model and forms to support scheduling tasks:
+   - Add `is_scheduling_task` field
+   - Add `provider_specialty_needed` field
+   - Update task creation/edit forms
+2. Add "Schedule" button to scheduling tasks on dashboard and task detail pages
+3. Create provider selection page/component for scheduling workflow:
+   - Filter providers by specialty from task
+   - Display provider information (name, location, phone, system)
+   - Calculate and display distance from patient location
+   - Highlight preferred healthcare system providers
+4. Implement distance calculation helper:
+   - Use Haversine formula for lat/long distance
+   - Display as "X.X miles away"
+5. Generate mock availability for preferred system providers:
+   - Create 3-5 fake time slots
+   - Next 2 weeks, weekdays only (8 AM - 4 PM)
+   - Display as clickable buttons (e.g., "Nov 14 10:00 AM")
+6. Create appointment creation flow from availability:
+   - Click time slot → redirect to appointment form
+   - Pre-fill provider, date, time
+   - Allow user to review and save
+   - Link appointment to scheduling task via `scheduled_from_task_id`
+   - Mark scheduling task as complete
+7. Add "Independent Providers" section showing non-system providers
+   - Note that these need manual scheduling outside the app
+8. Create feature tests for scheduling workflow
+9. Add authorization checks
+
+**Deliverables:**
+- Scheduling task identification and UI
+- Provider selection interface with distance
+- Mock availability generation
+- Appointment creation from scheduling
+- Distance calculation helper
+- Complete scheduling workflow
+
+**Testing Checklist:**
+- [ ] Scheduling tasks show "Schedule" button
+- [ ] Clicking "Schedule" shows filtered provider list
+- [ ] Providers are filtered by specialty correctly
+- [ ] Distance is calculated and displayed accurately
+- [ ] Preferred system providers show availability
+- [ ] Non-preferred providers don't show availability
+- [ ] Clicking availability slot creates appointment with correct data
+- [ ] Appointment is linked to scheduling task
+- [ ] Scheduling task is marked complete after appointment creation
+- [ ] Distance calculation works for various coordinates
+- [ ] Feature tests pass for complete workflow
+
+---
+
+### Milestone 8: Appointment Manager - View, Edit, Delete
 **Goal:** Complete CRUD operations for appointments and add task management to appointments
 
 **Tasks:**
@@ -418,7 +559,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 7: Task Manager
+### Milestone 9: Task Manager
 **Goal:** Implement complete CRUD for patient tasks with optional appointment linking
 
 **Tasks:**
@@ -447,7 +588,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - [ ] Tasks show linked appointment (if applicable)
 - [ ] User can filter by pending/completed
 - [ ] User can create new task with optional appointment link
-- [ ] User can create task from appointment page (tested in Milestone 6)
+- [ ] User can create task from appointment page (tested in Milestone 8)
 - [ ] User can mark task as complete/incomplete
 - [ ] User can edit existing task and change appointment link
 - [ ] User can delete task (with confirmation)
@@ -456,7 +597,56 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 8: Event Details & Feed Enhancement
+### Milestone 10: Encounter Timeline Page
+**Goal:** Create timeline view of patient's healthcare encounters with Plain English Patient Record
+
+**Tasks:**
+1. Create route `/timeline` for encounter timeline page
+2. Create Timeline controller/Volt component
+3. Build timeline page layout:
+   - Header section with Plain English Patient Record
+   - Show when record was last updated
+   - Prominent heading: "Your Health Story in Plain English"
+4. Display all past appointments in reverse chronological order:
+   - Query appointments where `date` < today
+   - Show date, provider name, specialty (if available)
+   - Display visit summary
+   - Show attached documents with download links
+   - Display related tasks created from each visit
+5. Implement visual timeline design:
+   - Use timeline component from Flux UI or create custom
+   - Date markers for each encounter
+   - Clear visual hierarchy
+6. Add actions:
+   - "Download Full Health Record" button (optional - PDF export)
+   - "Back to Dashboard" link
+7. Ensure responsive design for mobile
+8. Create feature tests for timeline page
+9. Add authorization (user can only view their own timeline)
+
+**Deliverables:**
+- Working `/timeline` route and page
+- Display of Plain English Patient Record
+- Chronological list of past appointments (encounters)
+- Document links and related tasks
+- Responsive timeline design
+
+**Testing Checklist:**
+- [ ] Timeline page loads for authenticated user at `/timeline`
+- [ ] Plain English Patient Record displays at top
+- [ ] Last updated timestamp shows correctly
+- [ ] Past appointments display in reverse chronological order
+- [ ] Future appointments are NOT shown on timeline
+- [ ] Visit summaries display correctly
+- [ ] Attached documents are shown with download links
+- [ ] Related tasks display for each encounter
+- [ ] Timeline works on mobile devices
+- [ ] User can only access their own timeline
+- [ ] Feature tests pass
+
+---
+
+### Milestone 11: Event Details & Feed Enhancement
 **Goal:** Implement event details page and improve feed filtering
 
 **Tasks:**
@@ -481,7 +671,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 9: UI/UX Polish & Mobile Optimization
+### Milestone 12: UI/UX Polish & Mobile Optimization
 **Goal:** Ensure excellent user experience across all devices
 
 **Tasks:**
@@ -514,7 +704,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 10: Testing & Code Quality
+### Milestone 13: Testing & Code Quality
 **Goal:** Ensure comprehensive test coverage and code quality
 
 **Tasks:**
@@ -549,7 +739,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 11: Deployment Preparation
+### Milestone 14: Deployment Preparation
 **Goal:** Prepare application for Laravel Cloud deployment
 
 **Tasks:**
@@ -579,7 +769,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 12: Final Review & Launch
+### Milestone 15: Final Review & Launch
 **Goal:** Final testing and production launch
 
 **Tasks:**
@@ -639,29 +829,42 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 These features can be added after MVP launch:
 
 ### Phase 2 Features
-- Search/filter on appointment and task lists
-- Calendar view for appointments
-- Tagging/category system for community events (smarter feed filtering)
-- Notification system (email/SMS reminders)
-- Export appointments to ICS/Calendar
-- Print appointment summary
+- **Real Healthcare System Integration**: Replace mock data with actual EHR/EMR API integration
+- **Real Appointment Scheduling**: Integration with provider scheduling systems for live availability
+- **Summary of Services**: Auto-generate and send pre-visit summaries to providers 3 days before appointments
+- **EOB (Explanation of Benefits) Management**: Upload, view, and analyze EOBs with financial breakdowns
+- **Search/filter on appointment and task lists**: Advanced filtering and search capabilities
+- **Calendar view for appointments**: Interactive calendar interface
+- **Notification system**: Email/SMS reminders for appointments and tasks
+- **Patient location updates**: Allow patients to update their location for accurate distance calculations
+- **Export appointments to ICS/Calendar**: Integration with personal calendars
 
 ### Phase 3 Features
-- REST API for mobile app development
-- Two-factor authentication (Fortify feature)
-- Profile management (update email, password)
-- Advanced event recommendations using ML/AI
-- Integration with healthcare provider systems
-- Appointment sharing with caregivers
-- Multi-language support
+- **Advanced AI Features**:
+  - OCR for uploaded documents
+  - Natural language processing for encounter notes
+  - Predictive health insights
+  - Automated task creation from appointments
+- **Geocoding and Mapping**: Real address geocoding with map views for providers
+- **REST API for mobile app development**
+- **Two-factor authentication** (Fortify feature)
+- **Profile management** (update email, password, preferences)
+- **Tagging/category system for community events** (smarter feed filtering)
+- **Advanced event recommendations using ML/AI**
+- **Appointment sharing with caregivers**
+- **Multi-language support**
+- **Medication tracking and reminders**
+- **Lab results integration**
 
 ### Nice-to-Have UI Improvements
-- Drag-and-drop file uploads
-- Inline calendar date picker
-- Toast notifications instead of flash messages
-- Dark mode toggle
-- Customizable dashboard widgets
-- PDF generation for appointment summaries
+- **Drag-and-drop file uploads**
+- **Inline calendar date picker**
+- **Toast notifications instead of flash messages**
+- **Dark mode toggle**
+- **Customizable dashboard widgets**
+- **Interactive provider map view**
+- **Print/export encounter timeline**
+- **Bulk task operations**
 
 ---
 
@@ -742,10 +945,26 @@ These features can be added after MVP launch:
 ---
 
 **Last Updated:** 2025-11-08
-**Version:** 1.1
+**Version:** 1.2
 **Status:** Ready for Development
 
 **Changelog:**
+- v1.2: **Healthcare Integration Features**
+  - Added new database fields to `patients`: `latitude`, `longitude`, `plain_english_record`, `executive_summary`, `executive_summary_updated_at`
+  - Added new database fields to `healthcare_providers`: `latitude`, `longitude`, `specialty`
+  - Added new database fields to `patient_tasks`: `is_scheduling_task`, `provider_specialty_needed`
+  - Added new database field to `patient_appointments`: `scheduled_from_task_id`
+  - Added note that past appointments (date < today) function as healthcare encounters
+  - **NEW Milestone 5**: Mock Healthcare Data Command - Generate realistic encounters with AI summaries
+  - **NEW Milestone 7**: Mock Scheduling Workflow - Task-based appointment scheduling with provider selection
+  - **NEW Milestone 10**: Encounter Timeline Page - Display patient health history at `/timeline`
+  - Updated Milestone 4 (Dashboard) to include Executive Summary card and distance calculations
+  - Renumbered milestones: Original 5→6, 6→8, 7→9, 8→11, 9→12, 10→13, 11→14, 12→15
+  - Added OpenAI API integration for AI-generated summaries
+  - Added DomPDF integration for mock healthcare documents
+  - Added Joplin, MO area coordinates for seeded data
+  - Added Haversine formula for distance calculations
+  - Updated post-MVP enhancements to reflect new architecture
 - v1.1: Added `patient_appointment_id` to tasks table, allowing tasks to optionally belong to appointments
 - v1.1: Updated Appointment Details page to display related tasks and allow adding tasks
 - v1.1: Enhanced Task Manager to support appointment linking
