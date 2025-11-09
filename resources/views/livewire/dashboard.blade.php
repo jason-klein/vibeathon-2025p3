@@ -2,6 +2,7 @@
 
 use App\Models\CommunityEvent;
 use App\Models\Patient;
+use App\Models\PatientTask;
 use App\Support\Helpers\DistanceCalculator;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,12 +19,74 @@ state(['patient' => function () {
 
     return Patient::with([
         'appointments' => fn ($q) => $q->where('date', '>=', today())->orderBy('date')->orderBy('time')->limit(3)->with('provider.system'),
-        'tasks' => fn ($q) => $q->whereNull('completed_at')->orderBy('created_at', 'desc')->limit(5)->with('scheduledAppointment'),
     ])->find($patient->id);
 }]);
 
 state(['upcomingAppointmentsCount' => fn () => Auth::user()->patient?->appointments()->where('date', '>=', today())->count() ?? 0]);
 state(['activeTasksCount' => fn () => Auth::user()->patient?->tasks()->whereNull('completed_at')->count() ?? 0]);
+
+state([
+    'showSchedulingTaskConfirmation' => false,
+    'taskToComplete' => null,
+]);
+
+$activeTasks = computed(function () {
+    if (!$this->patient) {
+        return collect();
+    }
+
+    return $this->patient->tasks()
+        ->whereNull('completed_at')
+        ->orderBy('created_at', 'desc')
+        ->limit(5)
+        ->with('scheduledAppointment')
+        ->get();
+});
+
+$toggleTask = function (int $taskId) {
+    $task = PatientTask::with('scheduledAppointment')->findOrFail($taskId);
+    $this->authorize('update', $task);
+
+    if ($task->patient_id !== Auth::user()->patient->id) {
+        abort(403);
+    }
+
+    // If marking complete and it's a scheduling task without a scheduled appointment, show confirmation
+    if (!$task->completed_at && $task->is_scheduling_task && !$task->scheduledAppointment) {
+        $this->taskToComplete = $taskId;
+        $this->showSchedulingTaskConfirmation = true;
+        return;
+    }
+
+    $task->update([
+        'completed_at' => $task->completed_at ? null : now(),
+    ]);
+};
+
+$confirmTaskComplete = function () {
+    if (!$this->taskToComplete) {
+        return;
+    }
+
+    $task = PatientTask::findOrFail($this->taskToComplete);
+    $this->authorize('update', $task);
+
+    if ($task->patient_id !== Auth::user()->patient->id) {
+        abort(403);
+    }
+
+    $task->update([
+        'completed_at' => now(),
+    ]);
+
+    $this->showSchedulingTaskConfirmation = false;
+    $this->taskToComplete = null;
+};
+
+$cancelTaskComplete = function () {
+    $this->showSchedulingTaskConfirmation = false;
+    $this->taskToComplete = null;
+};
 
 $personalizedFeed = computed(function () {
     $patient = $this->patient;
@@ -77,7 +140,8 @@ $personalizedFeed = computed(function () {
         }
 
         // Extract keywords from tasks
-        foreach ($patient->tasks as $task) {
+        $tasks = $patient->tasks()->get();
+        foreach ($tasks as $task) {
             if ($task->description) {
                 $keywords = $keywords->merge(str_word_count(strtolower($task->description), 1));
             }
@@ -279,11 +343,31 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                     </div>
                 </div>
                 <div class="flex-1 p-6">
-                    @if($patient && $patient->tasks->count() > 0)
+                    @if($patient && $this->activeTasks->count() > 0)
                         <div class="space-y-3">
-                            @foreach($patient->tasks as $task)
-                                <a href="{{ route('tasks.show', $task->id) }}" class="flex items-start gap-3 rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:hover:border-zinc-600">
-                                    <div class="flex size-5 shrink-0 items-center justify-center rounded border-2 border-zinc-300 dark:border-zinc-600"></div>
+                            @foreach($this->activeTasks as $task)
+                                <div
+                                    wire:key="task-{{ $task->id }}"
+                                    onclick="window.location.href='{{ route('tasks.show', $task->id) }}'"
+                                    class="flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:hover:border-zinc-600"
+                                >
+                                    <button
+                                        wire:click.stop="toggleTask({{ $task->id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:target="toggleTask({{ $task->id }})"
+                                        class="flex size-5 shrink-0 items-center justify-center rounded border-2 transition-colors {{ $task->completed_at ? 'border-green-500 bg-green-500' : 'border-zinc-300 bg-white hover:border-green-600 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:border-green-600' }}"
+                                    >
+                                        <span wire:loading.remove wire:target="toggleTask({{ $task->id }})">
+                                            @if($task->completed_at)
+                                                <svg class="size-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            @endif
+                                        </span>
+                                        <svg wire:loading wire:target="toggleTask({{ $task->id }})" class="size-3 animate-spin text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                    </button>
                                     <div class="flex-1">
                                         <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ $task->description }}</p>
                                         @if($task->instructions)
@@ -312,7 +396,7 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                                             @endif
                                         </div>
                                     </div>
-                                </a>
+                                </div>
                             @endforeach
                         </div>
                     @else
@@ -480,5 +564,38 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                 @endif
             </div>
         </div>
+
+    {{-- Scheduling Task Confirmation Modal --}}
+    <flux:modal wire:model="showSchedulingTaskConfirmation" name="scheduling-task-confirmation">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Schedule This Task Instead?</flux:heading>
+                <flux:subheading>
+                    This is a scheduling task that hasn't been scheduled yet. We recommend using the "Schedule" button to book an appointment rather than marking it complete.
+                </flux:subheading>
+            </div>
+
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                <div class="flex items-start gap-3">
+                    <svg class="size-5 shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p class="text-sm text-amber-900 dark:text-amber-200">
+                        Are you sure you want to mark this as complete without scheduling the appointment?
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                <flux:button type="button" variant="ghost" wire:click="cancelTaskComplete">
+                    Cancel
+                </flux:button>
+                <flux:button type="button" variant="primary" wire:click="confirmTaskComplete" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="confirmTaskComplete">Yes, Mark Complete</span>
+                    <span wire:loading wire:target="confirmTaskComplete">Marking Complete...</span>
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
     </div>
 </div>
