@@ -21,6 +21,7 @@ class PatientAppointment extends Model
         'summary',
         'patient_notes',
         'scheduled_from_task_id',
+        'executive_summary',
     ];
 
     protected function casts(): array

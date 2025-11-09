@@ -165,17 +165,19 @@ test('timeline displays attached documents with download links', function () {
         'date' => now()->subDays(10),
     ]);
 
-    PatientAppointmentDocument::factory()->for($appointment, 'appointment')->create([
-        'file_path' => 'appointment_docs/test-document.pdf',
-        'summary' => 'Lab results document',
-    ]);
+    PatientAppointmentDocument::withoutEvents(function () use ($appointment) {
+        return PatientAppointmentDocument::factory()->for($appointment, 'appointment')->create([
+            'file_path' => 'appointment_docs/test-document.pdf',
+            'summary' => 'Lab results document',
+        ]);
+    });
 
     $response = $this->actingAs($user)->get('/timeline');
 
     $response->assertSuccessful();
     $response->assertSee('Documents (1)');
     $response->assertSee('test-document.pdf');
-    $response->assertSee('Lab results document');
+    $response->assertSee('Lab results document', false);
 });
 
 test('timeline displays related tasks for each encounter', function () {

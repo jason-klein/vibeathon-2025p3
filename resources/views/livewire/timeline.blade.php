@@ -136,6 +136,28 @@ $patient = computed(function () {
                                     </div>
                                 @endif
 
+                                {{-- Appointment Executive Summary (AI-Generated) --}}
+                                @if($appointment->executive_summary)
+                                    <div class="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm dark:border-blue-800 dark:from-blue-900/20 dark:to-zinc-800">
+                                        <div class="mb-2 flex items-center gap-2">
+                                            <svg class="size-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
+                                            </svg>
+                                            <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-200">Appointment Summary</h4>
+                                            <span class="ml-auto text-xs font-medium text-blue-700 dark:text-blue-400">AI-Generated</span>
+                                        </div>
+                                        <div class="prose prose-sm max-w-none text-zinc-700 dark:prose-invert dark:text-zinc-300">
+                                            {!! nl2br(e($appointment->executive_summary)) !!}
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+                                        <p class="text-xs italic text-zinc-500 dark:text-zinc-400">
+                                            Appointment summary generating...
+                                        </p>
+                                    </div>
+                                @endif
+
                                 {{-- Visit Summary --}}
                                 @if($appointment->summary)
                                     <div class="rounded-lg border border-zinc-300 bg-white p-4 shadow-sm dark:border-zinc-600 dark:bg-zinc-800">

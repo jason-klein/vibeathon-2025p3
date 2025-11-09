@@ -646,7 +646,83 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 11: Event Details & Feed Enhancement
+### Milestone 11: AI-Powered Document and Appointment Executive Summaries
+**Goal:** Add automated AI-generated executive summaries for documents and appointments with background processing
+
+**Tasks:**
+1. Install dependencies for document processing:
+   - Add PDF text extraction package (`smalot/pdfparser`)
+   - Add OCR support if needed for images (`thiagoalessio/tesseract_ocr` or cloud service)
+   - Configure queue system (database or Redis)
+2. Create database migration:
+   - Add `executive_summary` (text, nullable) to `patient_appointments` table
+   - Run migration
+3. Update models:
+   - Add `executive_summary` to `PatientAppointment` fillable array
+   - Verify `summary` field exists in `PatientAppointmentDocument` model
+4. Extend AI Summary Service:
+   - Add `generateDocumentExecutiveSummary()` method - extracts text and creates detailed summary
+   - Add `generateAppointmentExecutiveSummary()` method - synthesizes appointment + all documents
+   - Handle PDF text extraction
+   - Handle image OCR if applicable
+   - Add proper error handling for unreadable documents
+5. Create queue jobs:
+   - Create `SummarizeAppointmentDocumentJob` - processes document and generates executive summary
+   - Create `UpdateAppointmentExecutiveSummaryJob` - regenerates appointment executive summary
+   - Create `UpdatePatientSummariesJob` - updates patient-level summaries for past appointments
+   - Ensure jobs handle failures gracefully
+6. Create model observers:
+   - Create `PatientAppointmentDocumentObserver` with `created()` hook
+   - Create `PatientAppointmentObserver` with `updated()` hook
+   - Wire observers to dispatch appropriate jobs
+7. Register observers:
+   - Update `AppServiceProvider::boot()` to register both observers
+8. Update Volt components:
+   - **Appointment show page**: Display document executive summary below each document
+   - **Timeline page**: Display appointment executive summary below each appointment
+   - Add loading states for "Summary generating..." when queued
+   - Add visual indicator that summaries are AI-generated
+   - Handle empty/null summaries gracefully
+9. Update existing components that create documents:
+   - Ensure observer is triggered for user-uploaded documents
+   - Ensure observer is triggered for programmatically created documents
+10. Create comprehensive tests:
+    - Feature test for document executive summary generation
+    - Feature test for appointment executive summary generation
+    - Feature test for observer triggering and job dispatching
+    - Feature test for queue processing
+    - Test PDF text extraction
+    - Test summary display on appointment page
+    - Test summary display on timeline page
+    - Update existing appointment tests to handle async job processing
+11. Run Laravel Pint on all new code
+12. Run affected tests to verify functionality
+
+**Deliverables:**
+- Background job infrastructure for AI summarization
+- Detailed executive summaries for all documents
+- Comprehensive executive summaries for all appointments
+- Updated UI showing summaries on appointment and timeline pages
+- Comprehensive test coverage for new functionality
+
+**Testing Checklist:**
+- [ ] PDF text extraction works correctly
+- [ ] Document executive summaries are detailed and accurate
+- [ ] Appointment executive summaries synthesize all context
+- [ ] Observers trigger when documents are created
+- [ ] Observers trigger when appointments are updated
+- [ ] Jobs are queued and processed successfully
+- [ ] Document summaries display below documents on appointment page
+- [ ] Appointment summaries display below appointments on timeline page
+- [ ] Loading states show while summaries are generating
+- [ ] AI-generated indicator displays correctly
+- [ ] Queue jobs handle failures gracefully
+- [ ] All feature tests pass
+- [ ] Code formatted with Pint
+
+---
+
+### Milestone 12: Event Details & Feed Enhancement
 **Goal:** Implement event details page and improve feed filtering
 
 **Tasks:**
@@ -671,7 +747,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 12: UI/UX Polish & Mobile Optimization
+### Milestone 13: UI/UX Polish & Mobile Optimization
 **Goal:** Ensure excellent user experience across all devices
 
 **Tasks:**
@@ -704,7 +780,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 13: Testing & Code Quality
+### Milestone 14: Testing & Code Quality
 **Goal:** Ensure comprehensive test coverage and code quality
 
 **Tasks:**
@@ -739,7 +815,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 14: Deployment Preparation
+### Milestone 15: Deployment Preparation
 **Goal:** Prepare application for Laravel Cloud deployment
 
 **Tasks:**
@@ -779,7 +855,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 ---
 
-### Milestone 15: Final Review & Launch
+### Milestone 16: Final Review & Launch
 **Goal:** Final testing and production launch
 
 **Tasks:**

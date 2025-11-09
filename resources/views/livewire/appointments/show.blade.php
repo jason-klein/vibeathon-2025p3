@@ -378,29 +378,45 @@ $downloadDocument = function (int $documentId) {
                 </h2>
 
                 @if($this->appointment->documents->count() > 0)
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         @foreach($this->appointment->documents as $document)
-                            <a
-                                href="{{ route('appointments.documents.download', ['appointment' => $this->appointment, 'document' => $document]) }}"
-                                class="flex items-center gap-3 rounded-lg border border-zinc-200 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:hover:bg-zinc-700/50"
-                            >
-                                <svg class="size-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                </svg>
-                                <div class="flex-1 min-w-0">
-                                    <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                        {{ basename($document->file_path) }}
-                                    </p>
-                                    @if($document->summary)
-                                        <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                            <div class="rounded-lg border border-zinc-200 dark:border-zinc-600">
+                                <a
+                                    href="{{ route('appointments.documents.download', ['appointment' => $this->appointment, 'document' => $document]) }}"
+                                    class="flex items-center gap-3 p-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
+                                >
+                                    <svg class="size-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                            {{ basename($document->file_path) }}
+                                        </p>
+                                    </div>
+                                    <svg class="size-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                </a>
+                                @if($document->summary)
+                                    <div class="border-t border-zinc-200 bg-zinc-50 px-3 py-3 dark:border-zinc-600 dark:bg-zinc-800/50">
+                                        <div class="mb-1 flex items-center gap-1.5">
+                                            <svg class="size-3.5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
+                                            </svg>
+                                            <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">AI-Generated Summary</span>
+                                        </div>
+                                        <p class="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
                                             {{ $document->summary }}
                                         </p>
-                                    @endif
-                                </div>
-                                <svg class="size-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                            </a>
+                                    </div>
+                                @else
+                                    <div class="border-t border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800/50">
+                                        <p class="text-xs italic text-zinc-500 dark:text-zinc-400">
+                                            Summary generating...
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
                         @endforeach
                     </div>
                 @else

@@ -17,6 +17,10 @@ beforeEach(function () {
     $this->mock(AiSummaryService::class, function ($mock) {
         $mock->shouldReceive('updatePatientSummaries')
             ->andReturn(null);
+        $mock->shouldReceive('generateDocumentExecutiveSummary')
+            ->andReturn('Mock document summary');
+        $mock->shouldReceive('generateAppointmentExecutiveSummary')
+            ->andReturn('Mock appointment summary');
     });
 });
 

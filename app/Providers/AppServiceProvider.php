@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\PatientAppointment;
+use App\Models\PatientAppointmentDocument;
+use App\Observers\PatientAppointmentDocumentObserver;
+use App\Observers\PatientAppointmentObserver;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
 
@@ -24,5 +28,9 @@ class AppServiceProvider extends ServiceProvider
             resource_path('views/livewire'),
             resource_path('views/pages'),
         ]);
+
+        // Register model observers
+        PatientAppointmentDocument::observe(PatientAppointmentDocumentObserver::class);
+        PatientAppointment::observe(PatientAppointmentObserver::class);
     }
 }
