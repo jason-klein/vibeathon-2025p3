@@ -17,6 +17,8 @@ title('Schedule Appointment');
 
 state(['taskId' => null]);
 state(['selectedProviderId' => null]);
+state(['showConfirmModal' => false]);
+state(['pendingAppointment' => null]);
 state(['isScheduling' => false]);
 state(['modalSuccess' => false]);
 state(['showConfirmation' => false]);
@@ -143,18 +145,39 @@ $selectProvider = function ($providerId) {
 
 $bookAppointment = function ($providerId, $date, $time) {
     $provider = HealthcareProvider::findOrFail($providerId);
+
+    // Store pending appointment details
+    $this->pendingAppointment = [
+        'provider_id' => $providerId,
+        'provider_name' => $provider->name,
+        'provider_location' => $provider->location,
+        'date' => $date,
+        'time' => $time,
+        'date_formatted' => \Carbon\Carbon::parse($date)->format('M j, Y'),
+        'time_formatted' => \Carbon\Carbon::parse($time)->format('g:i A'),
+    ];
+
+    // Show confirmation modal
+    $this->showConfirmModal = true;
+};
+
+$confirmBooking = function () {
+    $pending = $this->pendingAppointment;
     $task = $this->task;
     $patient = $this->patient;
+
+    // Close confirmation modal
+    $this->showConfirmModal = false;
 
     // Show scheduling modal
     $this->isScheduling = true;
 
-    // Create the appointment immediately (visual delay handled in frontend)
+    // Create the appointment (visual delay handled in frontend)
     $appointment = $patient->appointments()->create([
-        'healthcare_provider_id' => $provider->id,
-        'date' => $date,
-        'time' => $time,
-        'location' => $provider->location,
+        'healthcare_provider_id' => $pending['provider_id'],
+        'date' => $pending['date'],
+        'time' => $pending['time'],
+        'location' => $pending['provider_location'],
         'summary' => $task->description,
         'scheduled_from_task_id' => $task->id,
     ]);
@@ -170,11 +193,16 @@ $bookAppointment = function ($providerId, $date, $time) {
     // Store appointment details for confirmation display
     $this->confirmedAppointment = [
         'confirmation_number' => $appointment->confirmation_number,
-        'date' => \Carbon\Carbon::parse($date)->format('M j, Y'),
-        'time' => \Carbon\Carbon::parse($time)->format('g:i A'),
-        'provider_name' => $provider->name,
-        'location' => $provider->location,
+        'date' => $pending['date_formatted'],
+        'time' => $pending['time_formatted'],
+        'provider_name' => $pending['provider_name'],
+        'location' => $pending['provider_location'],
     ];
+};
+
+$cancelBooking = function () {
+    $this->showConfirmModal = false;
+    $this->pendingAppointment = null;
 };
 
 ?>
@@ -455,6 +483,58 @@ $bookAppointment = function ($providerId, $date, $time) {
             </p>
         </div>
     @endif
+
+    {{-- Confirmation Modal --}}
+    <flux:modal wire:model="showConfirmModal" class="min-w-[500px]">
+        <div class="p-6">
+            <div class="mb-4 flex items-center gap-3">
+                <div class="flex size-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                    <svg class="size-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Confirm Appointment</h3>
+            </div>
+
+            @if($pendingAppointment)
+                <p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+                    Please review and confirm your appointment details:
+                </p>
+
+                <div class="mb-6 space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+                    <div class="flex justify-between border-b border-zinc-200 pb-2 dark:border-zinc-700">
+                        <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Provider</span>
+                        <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ $pendingAppointment['provider_name'] }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-200 pb-2 dark:border-zinc-700">
+                        <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Date</span>
+                        <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ $pendingAppointment['date_formatted'] }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-200 pb-2 dark:border-zinc-700">
+                        <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Time</span>
+                        <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ $pendingAppointment['time_formatted'] }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Location</span>
+                        <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ $pendingAppointment['provider_location'] }}</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <flux:button wire:click="cancelBooking" variant="ghost" class="flex-1">
+                        Cancel
+                    </flux:button>
+                    <button
+                        wire:click="confirmBooking"
+                        type="button"
+                        class="flex-1 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 dark:bg-green-600 dark:hover:bg-green-500"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            @endif
+        </div>
+    </flux:modal>
 
     {{-- Scheduling Modal --}}
     <flux:modal wire:model="isScheduling" class="min-w-[400px]">
