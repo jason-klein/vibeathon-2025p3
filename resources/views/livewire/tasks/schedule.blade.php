@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Patient;
 use App\Models\PatientTask;
 use App\Models\HealthcareProvider;
 use App\Support\Helpers\DistanceCalculator;

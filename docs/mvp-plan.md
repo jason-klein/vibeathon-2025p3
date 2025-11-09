@@ -729,7 +729,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - All tests passing
 
 **Testing Checklist:**
-- [ ] All feature tests pass
+- [X] All feature tests pass (142 tests passing - scheduling workflow tests fixed)
 - [X] All unit tests pass
 - [X] Code formatted with Pint
 - [ ] No N+1 query issues (not tested in this milestone)

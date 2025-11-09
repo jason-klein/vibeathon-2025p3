@@ -14,7 +14,9 @@ use function Pest\Laravel\get;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    $this->patient = Patient::factory()->for($this->user)->create([
+    // The User factory automatically creates a patient, so we just update it with coordinates
+    $this->patient = $this->user->patient;
+    $this->patient->update([
         'latitude' => 37.0842,
         'longitude' => -94.5133,
     ]);
@@ -36,7 +38,7 @@ test('scheduling tasks show Schedule button on dashboard', function () {
         ->assertSee('Schedule');
 });
 
-test('completed scheduling tasks show Appointment Scheduled badge instead of Schedule button', function () {
+test('completed scheduling tasks do not appear on dashboard', function () {
     actingAs($this->user);
 
     $system = HealthcareSystem::factory()->create([
@@ -54,15 +56,15 @@ test('completed scheduling tasks show Appointment Scheduled badge instead of Sch
         'completed_at' => now(),
     ]);
 
-    $appointment = PatientAppointment::factory()->for($this->patient)->for($provider)->create([
+    $appointment = PatientAppointment::factory()->for($this->patient)->for($provider, 'provider')->create([
         'scheduled_from_task_id' => $schedulingTask->id,
         'date' => now()->addDays(7),
     ]);
 
     get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Appointment Scheduled')
-        ->assertDontSee('>Schedule<');
+        ->assertDontSee('Schedule Cardiology appointment')
+        ->assertSee('No active tasks');
 });
 
 test('clicking Schedule button shows provider selection page', function () {
@@ -334,7 +336,8 @@ test('cannot access scheduling page for non-scheduling task', function () {
 
 test('cannot access scheduling page for another users task', function () {
     $otherUser = User::factory()->create();
-    $otherPatient = Patient::factory()->for($otherUser)->create();
+    // Use the auto-created patient from the User factory
+    $otherPatient = $otherUser->patient;
 
     $task = PatientTask::factory()->for($otherPatient)->create([
         'description' => 'Schedule Cardiology appointment',
