@@ -111,7 +111,7 @@
                 </div>
                 <div class="bg-[#fff2f2] dark:bg-[#1D0002] relative lg:-ms-px -mb-px lg:mb-0 rounded-t-lg lg:rounded-t-none lg:rounded-e-lg! aspect-[335/376] lg:aspect-auto w-full lg:w-[438px] shrink-0 overflow-hidden">
                     {{-- Team Logo --}}
-                    <img src="{{ asset('logo_project.png') }}" alt="Project Logo" class="w-full h-auto transition-all translate-y-0 opacity-100 max-w-none duration-750 starting:opacity-0 starting:translate-y-6" />
+                    <img src="{{ asset('logo_harmony.png') }}" alt="Harmony Logo" class="w-full h-auto transition-all translate-y-0 opacity-100 max-w-none duration-750 starting:opacity-0 starting:translate-y-6" />
                 </div>
             </main>
         </div>
