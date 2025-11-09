@@ -1,14 +1,21 @@
 <?php
 
 use App\Models\Patient;
+use App\Models\PatientTask;
 use Illuminate\Support\Facades\Auth;
 
 use function Livewire\Volt\computed;
 use function Livewire\Volt\layout;
+use function Livewire\Volt\state;
 use function Livewire\Volt\title;
 
 layout('components.layouts.app');
 title('Your Health Timeline');
+
+state([
+    'showSchedulingTaskConfirmation' => false,
+    'taskToComplete' => null,
+]);
 
 $patient = computed(function () {
     $user = Auth::user();
@@ -24,6 +31,51 @@ $patient = computed(function () {
             ->with(['provider.system', 'documents', 'tasks' => fn ($tq) => $tq->with(['appointment.provider', 'scheduledAppointment'])->orderBy('created_at', 'desc')]),
     ])->find($user->patient->id);
 });
+
+$toggleTask = function (int $taskId) {
+    $task = PatientTask::with('scheduledAppointment')->findOrFail($taskId);
+    $this->authorize('update', $task);
+
+    if ($task->patient_id !== Auth::user()->patient->id) {
+        abort(403);
+    }
+
+    // If marking complete and it's a scheduling task without a scheduled appointment, show confirmation
+    if (!$task->completed_at && $task->is_scheduling_task && !$task->scheduledAppointment) {
+        $this->taskToComplete = $taskId;
+        $this->showSchedulingTaskConfirmation = true;
+        return;
+    }
+
+    $task->update([
+        'completed_at' => $task->completed_at ? null : now(),
+    ]);
+};
+
+$confirmTaskComplete = function () {
+    if (!$this->taskToComplete) {
+        return;
+    }
+
+    $task = PatientTask::findOrFail($this->taskToComplete);
+    $this->authorize('update', $task);
+
+    if ($task->patient_id !== Auth::user()->patient->id) {
+        abort(403);
+    }
+
+    $task->update([
+        'completed_at' => now(),
+    ]);
+
+    $this->showSchedulingTaskConfirmation = false;
+    $this->taskToComplete = null;
+};
+
+$cancelTaskComplete = function () {
+    $this->showSchedulingTaskConfirmation = false;
+    $this->taskToComplete = null;
+};
 
 ?>
 
@@ -225,13 +277,23 @@ $patient = computed(function () {
                                                     onclick="window.location.href='{{ route('tasks.show', $task) }}'"
                                                     class="flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-200 p-3 transition-shadow hover:shadow-md dark:border-zinc-700 dark:hover:shadow-zinc-900/50"
                                                 >
-                                                    <div class="flex size-5 shrink-0 items-center justify-center rounded border-2 {{ $task->completed_at ? 'border-green-500 bg-green-500' : 'border-zinc-300 dark:border-zinc-600' }}">
-                                                        @if($task->completed_at)
-                                                            <svg class="size-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                                                            </svg>
-                                                        @endif
-                                                    </div>
+                                                    <button
+                                                        wire:click.stop="toggleTask({{ $task->id }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="toggleTask({{ $task->id }})"
+                                                        class="flex size-5 shrink-0 items-center justify-center rounded border-2 transition-colors {{ $task->completed_at ? 'border-green-500 bg-green-500' : 'border-zinc-300 bg-white hover:border-green-600 dark:border-zinc-600 dark:bg-zinc-700 dark:hover:border-green-600' }}"
+                                                    >
+                                                        <span wire:loading.remove wire:target="toggleTask({{ $task->id }})">
+                                                            @if($task->completed_at)
+                                                                <svg class="size-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+                                                            @endif
+                                                        </span>
+                                                        <svg wire:loading wire:target="toggleTask({{ $task->id }})" class="size-3 animate-spin text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                                        </svg>
+                                                    </button>
                                                     <div class="flex-1">
                                                         <p class="text-sm font-medium {{ $task->completed_at ? 'text-zinc-500 line-through dark:text-zinc-400' : 'text-zinc-900 dark:text-zinc-100' }}">
                                                             {{ $task->description }}
@@ -329,4 +391,37 @@ $patient = computed(function () {
             @endif
         </div>
     @endif
+
+    {{-- Scheduling Task Confirmation Modal --}}
+    <flux:modal wire:model="showSchedulingTaskConfirmation" name="scheduling-task-confirmation">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Schedule This Task Instead?</flux:heading>
+                <flux:subheading>
+                    This is a scheduling task that hasn't been scheduled yet. We recommend using the "Schedule" button to book an appointment rather than marking it complete.
+                </flux:subheading>
+            </div>
+
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                <div class="flex items-start gap-3">
+                    <svg class="size-5 shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p class="text-sm text-amber-900 dark:text-amber-200">
+                        Are you sure you want to mark this as complete without scheduling the appointment?
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                <flux:button type="button" variant="ghost" wire:click="cancelTaskComplete">
+                    Cancel
+                </flux:button>
+                <flux:button type="button" variant="primary" wire:click="confirmTaskComplete" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="confirmTaskComplete">Yes, Mark Complete</span>
+                    <span wire:loading wire:target="confirmTaskComplete">Marking Complete...</span>
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>

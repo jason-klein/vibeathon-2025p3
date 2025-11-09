@@ -108,6 +108,7 @@ test('user can toggle task completion from index page', function () {
     $task = PatientTask::factory()->for($patient)->create([
         'description' => 'Test task',
         'completed_at' => null,
+        'is_scheduling_task' => false,
     ]);
 
     $this->actingAs($user);
