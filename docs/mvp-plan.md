@@ -272,11 +272,11 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Basic responsive layout
 
 **Testing Checklist:**
-- [ ] User can register a new account
-- [ ] User can log in with email/password
-- [ ] User can log out
-- [ ] Public homepage displays correctly on mobile and desktop
-- [ ] Fortify routes are working (`list-routes` with vendor filter)
+- [X] User can register a new account
+- [X] User can log in with email/password
+- [X] User can log out
+- [X] Public homepage displays correctly on mobile and desktop
+- [X] Fortify routes are working (`list-routes` with vendor filter)
 
 ---
 
@@ -305,11 +305,11 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Seeded database with sample data
 
 **Testing Checklist:**
-- [ ] All migrations run successfully
-- [ ] Seeders populate database with sample data
-- [ ] Model relationships work correctly (test with Tinker)
-- [ ] Factories can create test data
-- [ ] `database-schema` tool shows correct structure
+- [X] All migrations run successfully
+- [X] Seeders populate database with sample data
+- [X] Model relationships work correctly (test with Tinker)
+- [X] Factories can create test data
+- [X] `database-schema` tool shows correct structure
 
 ---
 
@@ -327,9 +327,9 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Working user-to-patient relationship
 
 **Testing Checklist:**
-- [ ] New user registration creates patient record
-- [ ] User can access their patient record after registration
-- [ ] Test verifies patient creation
+- [X] New user registration creates patient record
+- [X] User can access their patient record after registration
+- [X] Test verifies patient creation
 
 ---
 
@@ -362,7 +362,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Basic event filtering
 
 **Testing Checklist:**
-- [ ] Dashboard loads for authenticated user
+- [X] Dashboard loads for authenticated user
 - [ ] Upcoming appointments display correctly (max 3) with distance
 - [ ] Pending tasks display correctly
 - [ ] Scheduling tasks show "Schedule" button
