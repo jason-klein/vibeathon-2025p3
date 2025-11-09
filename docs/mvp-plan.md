@@ -369,10 +369,10 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - [X] Executive Summary card displays between tasks and feed
 - [X] Executive Summary card is clickable and links to `/timeline`
 - [X] Distance calculation works correctly
-- [ ] Event feed shows relevant events
-- [ ] "View All" buttons navigate correctly
-- [ ] Mobile layout works properly
-- [ ] Feature test passes
+- [X] Event feed shows relevant events
+- [X] "View All" buttons navigate correctly
+- [X] Mobile layout works properly
+- [X] Feature test passes
 
 ---
 
