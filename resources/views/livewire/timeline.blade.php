@@ -15,6 +15,9 @@ title('Your Health Timeline');
 state([
     'showSchedulingTaskConfirmation' => false,
     'taskToComplete' => null,
+    'showPreviewModal' => false,
+    'previewDocument' => null,
+    'previewAppointment' => null,
 ]);
 
 $patient = computed(function () {
@@ -75,6 +78,29 @@ $confirmTaskComplete = function () {
 $cancelTaskComplete = function () {
     $this->showSchedulingTaskConfirmation = false;
     $this->taskToComplete = null;
+};
+
+$openPreview = function ($appointmentId, $documentId) {
+    $appointment = $this->patient->appointments->firstWhere('id', $appointmentId);
+
+    if (!$appointment) {
+        abort(404);
+    }
+
+    $this->previewDocument = $appointment->documents->firstWhere('id', $documentId);
+
+    if (!$this->previewDocument) {
+        abort(404);
+    }
+
+    $this->previewAppointment = $appointment;
+    $this->showPreviewModal = true;
+};
+
+$closePreview = function () {
+    $this->showPreviewModal = false;
+    $this->previewDocument = null;
+    $this->previewAppointment = null;
 };
 
 ?>
@@ -238,27 +264,55 @@ $cancelTaskComplete = function () {
                                         </h4>
                                         <div class="space-y-2">
                                             @foreach($appointment->documents as $document)
-                                                <a
-                                                    href="{{ route('appointments.documents.download', ['appointment' => $appointment, 'document' => $document]) }}"
-                                                    class="flex items-center gap-3 rounded-lg border border-zinc-200 p-3 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                                                >
-                                                    <svg class="size-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                                    </svg>
-                                                    <div class="flex-1 min-w-0">
-                                                        <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                            {{ basename($document->file_path) }}
-                                                        </p>
-                                                        @if($document->summary)
-                                                            <p class="text-xs text-zinc-600 dark:text-zinc-400">
+                                                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700">
+                                                    <div class="flex items-center gap-3 p-3">
+                                                        <svg class="size-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                                        </svg>
+                                                        <div class="flex-1 min-w-0">
+                                                            <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                                {{ basename($document->file_path) }}
+                                                            </p>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <flux:button
+                                                                wire:click="openPreview({{ $appointment->id }}, {{ $document->id }})"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                icon="eye"
+                                                            >
+                                                                Preview
+                                                            </flux:button>
+                                                            <flux:button
+                                                                href="{{ route('appointments.documents.download', ['appointment' => $appointment, 'document' => $document]) }}"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                icon="arrow-down-tray"
+                                                            >
+                                                                Download
+                                                            </flux:button>
+                                                        </div>
+                                                    </div>
+                                                    @if($document->summary)
+                                                        <div class="border-t border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800/50">
+                                                            <div class="mb-1 flex items-center gap-1.5">
+                                                                <svg class="size-3.5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
+                                                                </svg>
+                                                                <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">AI-Generated Summary</span>
+                                                            </div>
+                                                            <p class="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
                                                                 {{ $document->summary }}
                                                             </p>
-                                                        @endif
-                                                    </div>
-                                                    <svg class="size-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                                    </svg>
-                                                </a>
+                                                        </div>
+                                                    @else
+                                                        <div class="border-t border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800/50">
+                                                            <p class="text-xs italic text-zinc-500 dark:text-zinc-400">
+                                                                Summary generating...
+                                                            </p>
+                                                        </div>
+                                                    @endif
+                                                </div>
                                             @endforeach
                                         </div>
                                     </div>
@@ -424,4 +478,62 @@ $cancelTaskComplete = function () {
             </div>
         </div>
     </flux:modal>
+
+    {{-- Document Preview Modal --}}
+    @if($previewDocument && $previewAppointment)
+        <flux:modal wire:model="showPreviewModal" name="document-preview" class="!max-w-[95vw] !w-[95vw]">
+            <div class="space-y-4">
+                <div>
+                    <flux:heading size="lg">{{ basename($previewDocument->file_path) }}</flux:heading>
+                    <flux:subheading>Document Preview</flux:subheading>
+                </div>
+
+                <div class="rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+                    @php
+                        $extension = strtolower(pathinfo($previewDocument->file_path, PATHINFO_EXTENSION));
+                        $previewUrl = route('appointments.documents.preview', ['appointment' => $previewAppointment, 'document' => $previewDocument]);
+                    @endphp
+
+                    @if(in_array($extension, ['jpg', 'jpeg', 'png']))
+                        {{-- Image Preview --}}
+                        <div class="flex items-center justify-center p-4" style="height: 65vh;">
+                            <img
+                                src="{{ $previewUrl }}"
+                                alt="{{ basename($previewDocument->file_path) }}"
+                                class="max-h-full w-auto rounded-lg"
+                            />
+                        </div>
+                    @elseif($extension === 'pdf')
+                        {{-- PDF Preview with iframe --}}
+                        <div class="w-full" style="height: 65vh;">
+                            <iframe
+                                src="{{ $previewUrl }}"
+                                class="h-full w-full rounded-lg border-0"
+                                title="{{ basename($previewDocument->file_path) }}"
+                            ></iframe>
+                        </div>
+                    @else
+                        <div class="flex items-center justify-center p-8">
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                                Preview not available for this file type.
+                            </p>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="flex items-center justify-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                    <flux:button type="button" variant="ghost" wire:click="closePreview">
+                        Close
+                    </flux:button>
+                    <flux:button
+                        href="{{ route('appointments.documents.download', ['appointment' => $previewAppointment, 'document' => $previewDocument]) }}"
+                        variant="primary"
+                        icon="arrow-down-tray"
+                    >
+                        Download
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
+    @endif
 </div>
