@@ -18,8 +18,10 @@ title('Schedule Appointment');
 state(['taskId' => null]);
 state(['selectedProviderId' => null]);
 state(['isScheduling' => false]);
+state(['modalSuccess' => false]);
 state(['showConfirmation' => false]);
 state(['confirmedAppointment' => null]);
+state(['appointmentId' => null]);
 
 mount(function ($taskId) {
     $this->taskId = $taskId;
@@ -162,6 +164,9 @@ $bookAppointment = function ($providerId, $date, $time) {
         'completed_at' => now(),
     ]);
 
+    // Store appointment ID for redirect
+    $this->appointmentId = $appointment->id;
+
     // Store appointment details for confirmation display
     $this->confirmedAppointment = [
         'confirmation_number' => $appointment->confirmation_number,
@@ -178,22 +183,36 @@ $bookAppointment = function ($providerId, $date, $time) {
     class="flex h-full w-full flex-1 flex-col gap-6"
     x-data="{
         schedulingDelay: null,
+        successDelay: null,
         confirmationDelay: null,
         init() {
             // Watch for when scheduling starts
             this.$watch('$wire.isScheduling', (value) => {
                 if (value) {
-                    // Random delay between 2-3 seconds (2000-3000ms)
-                    const delay = Math.floor(Math.random() * 1000) + 2000;
-                    this.schedulingDelay = setTimeout(() => {
-                        $wire.isScheduling = false;
-                        $wire.showConfirmation = true;
+                    // Reset modalSuccess when modal opens
+                    $wire.modalSuccess = false;
 
-                        // Redirect after showing confirmation for 2-3 seconds
-                        const confirmDelay = Math.floor(Math.random() * 1000) + 2000;
-                        this.confirmationDelay = setTimeout(() => {
-                            window.location.href = '{{ route('appointments.index') }}';
-                        }, confirmDelay);
+                    // Show spinner for 2-3 seconds
+                    const delay = Math.floor(Math.random() * 1000) + 2000;
+                    this.schedulingDelay = setTimeout(async () => {
+                        // Change to checkmark and wait for Livewire to update
+                        $wire.modalSuccess = true;
+                        await $wire.$refresh();
+
+                        // Show checkmark for 1 second, then close modal
+                        this.successDelay = setTimeout(async () => {
+                            $wire.isScheduling = false;
+                            $wire.modalSuccess = false;
+                            $wire.showConfirmation = true;
+                            await $wire.$refresh();
+
+                            // Redirect after showing confirmation for 2-3 seconds
+                            const confirmDelay = Math.floor(Math.random() * 1000) + 2000;
+                            this.confirmationDelay = setTimeout(() => {
+                                const appointmentId = $wire.appointmentId;
+                                window.location.href = `/appointments/${appointmentId}`;
+                            }, confirmDelay);
+                        }, 1000);
                     }, delay);
                 }
             });
@@ -440,14 +459,27 @@ $bookAppointment = function ($providerId, $date, $time) {
     {{-- Scheduling Modal --}}
     <flux:modal wire:model="isScheduling" class="min-w-[400px]">
         <div class="flex flex-col items-center justify-center p-8">
-            <div class="mb-4">
-                <svg class="size-16 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Scheduling your appointment...</h3>
-            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Please wait a moment</p>
+            @if($modalSuccess)
+                {{-- Success Checkmark --}}
+                <div class="mb-4">
+                    <div class="flex size-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                        <svg class="size-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Appointment Scheduled!</h3>
+            @else
+                {{-- Spinning Loader --}}
+                <div class="mb-4">
+                    <svg class="size-16 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Scheduling your appointment...</h3>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Please wait a moment</p>
+            @endif
         </div>
     </flux:modal>
 </div>
