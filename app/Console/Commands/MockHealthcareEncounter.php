@@ -182,7 +182,7 @@ class MockHealthcareEncounter extends Command
         $filename = 'visit-summary-'.now()->format('Y-m-d-His').'.pdf';
         $path = 'appointment_docs/'.$filename;
 
-        Storage::put($path, $pdf->output());
+        Storage::disk('public')->put($path, $pdf->output());
 
         PatientAppointmentDocument::create([
             'patient_appointment_id' => $appointment->id,
