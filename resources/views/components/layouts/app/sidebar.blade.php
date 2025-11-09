@@ -17,6 +17,7 @@
                     <flux:navlist.item icon="calendar" :href="route('appointments.index')" :current="request()->routeIs('appointments.*')" wire:navigate>{{ __('Appointments') }}</flux:navlist.item>
                     <flux:navlist.item icon="book-open-text" :href="route('tasks.index')" :current="request()->routeIs('tasks.*')" wire:navigate>{{ __('Tasks') }}</flux:navlist.item>
                     <flux:navlist.item icon="folder-git-2" :href="route('timeline')" :current="request()->routeIs('timeline')" wire:navigate>{{ __('Timeline') }}</flux:navlist.item>
+                    <flux:navlist.item icon="calendar-days" :href="route('events.index')" :current="request()->routeIs('events.*')" wire:navigate>{{ __('Community Events') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 

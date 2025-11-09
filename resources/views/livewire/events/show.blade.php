@@ -13,11 +13,11 @@ mount(function (int $eventId) {
 
 <div class="mx-auto max-w-4xl">
     <div class="mb-6">
-        <a href="{{ route('dashboard') }}" class="inline-flex items-center text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+        <a href="{{ route('events.index') }}" class="inline-flex items-center text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100" wire:navigate>
             <svg class="mr-2 size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
-            Back to Dashboard
+            Back to Events
         </a>
     </div>
 
@@ -120,16 +120,16 @@ mount(function (int $eventId) {
                             </svg>
                             View Event Details
                         </a>
-                        <a href="{{ route('dashboard') }}" class="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700">
-                            Back to Dashboard
+                        <a href="{{ route('events.index') }}" class="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700" wire:navigate>
+                            Back to Events
                         </a>
                     </div>
                 @else
                     <p class="text-sm text-zinc-600 dark:text-zinc-400">
                         Interested in attending? Contact {{ $event->partner->name }} for more information.
                     </p>
-                    <a href="{{ route('dashboard') }}" class="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100">
-                        Back to Dashboard
+                    <a href="{{ route('events.index') }}" class="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100" wire:navigate>
+                        Back to Events
                     </a>
                 @endif
             </div>

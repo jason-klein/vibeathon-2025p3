@@ -149,8 +149,8 @@ test('event details page has back to dashboard link', function () {
     $response = $this->get(route('events.show', $event->id));
 
     $response->assertSuccessful()
-        ->assertSee('Back to Dashboard')
-        ->assertSee(route('dashboard'));
+        ->assertSee('Back to Events')
+        ->assertSee(route('events.index'));
 });
 
 test('event cards on dashboard are clickable', function () {

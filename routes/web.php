@@ -65,6 +65,9 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('tasks/{taskId}/schedule', 'tasks.schedule')
         ->name('tasks.schedule');
 
+    Volt::route('events', 'events.index')
+        ->name('events.index');
+
     Volt::route('events/{eventId}', 'events.show')
         ->name('events.show');
 
