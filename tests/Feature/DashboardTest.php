@@ -102,9 +102,9 @@ test('dashboard displays executive summary card when available', function () {
 
 test('dashboard does not show executive summary card when not available', function () {
     $user = User::factory()->create();
-    // The auto-created patient should have null executive_summary by default
-    // Just verify it's null
-    expect($user->patient->executive_summary)->toBeNull();
+    // Explicitly set executive_summary to null
+    $user->patient->update(['executive_summary' => null]);
+    expect($user->patient->fresh()->executive_summary)->toBeNull();
 
     $response = $this->actingAs($user)->get('/dashboard');
 

@@ -168,7 +168,7 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                     @if($patient && $patient->appointments->count() > 0)
                         <div class="space-y-4">
                             @foreach($patient->appointments as $appointment)
-                                <a href="{{ route('appointments.index') }}" class="block rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:hover:border-zinc-600">
+                                <a href="{{ route('appointments.show', $appointment->id) }}" class="block rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:hover:border-zinc-600">
                                     <div class="flex items-start justify-between">
                                         <div class="flex-1">
                                             <p class="font-medium text-zinc-900 dark:text-zinc-100">
@@ -236,10 +236,10 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                     @if($patient && $patient->tasks->count() > 0)
                         <div class="space-y-3">
                             @foreach($patient->tasks as $task)
-                                <div class="flex items-start gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+                                <a href="{{ route('tasks.show', $task->id) }}" class="flex items-start gap-3 rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:hover:border-zinc-600">
                                     <div class="flex size-5 shrink-0 items-center justify-center rounded border-2 border-zinc-300 dark:border-zinc-600"></div>
                                     <div class="flex-1">
-                                        <a href="{{ route('tasks.index') }}" class="font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300">{{ $task->description }}</a>
+                                        <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ $task->description }}</p>
                                         @if($task->instructions)
                                             <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ Str::limit($task->instructions, 100) }}</p>
                                         @endif
@@ -249,12 +249,12 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                                                     Scheduling Task
                                                 </span>
                                                 @if(!$task->scheduledAppointment)
-                                                    <a href="{{ route('tasks.schedule', $task->id) }}" class="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
+                                                    <span onclick="event.preventDefault(); event.stopPropagation(); window.location.href='{{ route('tasks.schedule', $task->id) }}';" class="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 cursor-pointer">
                                                         <svg class="-ml-0.5 mr-1.5 size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                         </svg>
                                                         Schedule
-                                                    </a>
+                                                    </span>
                                                 @else
                                                     <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
                                                         <svg class="mr-1 size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +266,7 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                                             @endif
                                         </div>
                                     </div>
-                                </div>
+                                </a>
                             @endforeach
                         </div>
                     @else
