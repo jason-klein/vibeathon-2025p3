@@ -145,14 +145,24 @@ $update = function () {
                 @endif
 
                 {{-- Form Actions --}}
-                <div class="flex items-center justify-end gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-700">
-                    <flux:button type="button" variant="ghost" href="{{ route('tasks.show', $this->task) }}">
-                        Cancel
-                    </flux:button>
-                    <flux:button type="submit" variant="primary" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="update">Update Task</span>
-                        <span wire:loading wire:target="update">Updating...</span>
-                    </flux:button>
+                <div class="flex items-center justify-between gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-700">
+                    <div wire:dirty class="text-sm text-amber-600 dark:text-amber-400">
+                        <span class="inline-flex items-center gap-2">
+                            <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            You have unsaved changes
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <flux:button type="button" variant="ghost" href="{{ route('tasks.show', $this->task) }}">
+                            Cancel
+                        </flux:button>
+                        <flux:button type="submit" variant="primary" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="update">Update Task</span>
+                            <span wire:loading wire:target="update">Updating...</span>
+                        </flux:button>
+                    </div>
                 </div>
             </div>
         </form>

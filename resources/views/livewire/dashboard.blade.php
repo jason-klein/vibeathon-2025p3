@@ -109,7 +109,7 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
 
         {{-- Stats Cards --}}
         <div class="grid gap-4 md:grid-cols-3">
-            <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
+            <a href="#upcoming-appointments" class="rounded-xl border border-zinc-200 bg-white p-6 transition-all hover:border-green-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-green-700">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Upcoming Appointments</p>
@@ -121,9 +121,9 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                         </svg>
                     </div>
                 </div>
-            </div>
+            </a>
 
-            <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
+            <a href="#active-tasks" class="rounded-xl border border-zinc-200 bg-white p-6 transition-all hover:border-blue-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-blue-700">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Active Tasks</p>
@@ -135,9 +135,9 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                         </svg>
                     </div>
                 </div>
-            </div>
+            </a>
 
-            <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
+            <a href="#health-journey" class="rounded-xl border border-zinc-200 bg-white p-6 transition-all hover:border-purple-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-purple-700">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Health Journey</p>
@@ -149,13 +149,13 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                         </svg>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         {{-- Main Content Grid --}}
         <div class="grid flex-1 gap-6 lg:grid-cols-2">
             {{-- Upcoming Appointments --}}
-            <div class="flex flex-col rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
+            <div id="upcoming-appointments" class="flex flex-col rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 scroll-mt-6">
                 <div class="border-b border-zinc-200 p-6 dark:border-zinc-700">
                     <div class="flex items-center justify-between">
                         <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Upcoming Appointments</h2>
@@ -223,7 +223,7 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
             </div>
 
             {{-- Active Tasks --}}
-            <div class="flex flex-col rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
+            <div id="active-tasks" class="flex flex-col rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 scroll-mt-6">
                 <div class="border-b border-zinc-200 p-6 dark:border-zinc-700">
                     <div class="flex items-center justify-between">
                         <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Active Tasks</h2>
@@ -284,7 +284,7 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
 
         {{-- Executive Summary Card --}}
         @if($patient && $patient->executive_summary)
-            <a href="/timeline" class="block rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white p-6 shadow-sm transition hover:border-purple-300 hover:shadow-md dark:border-purple-800 dark:from-purple-900/20 dark:to-zinc-800">
+            <a id="health-journey" href="/timeline" class="block scroll-mt-6 rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white p-6 shadow-sm transition hover:border-purple-300 hover:shadow-md dark:border-purple-800 dark:from-purple-900/20 dark:to-zinc-800">
                 <div class="flex items-start gap-4">
                     <div class="rounded-full bg-purple-100 p-3 dark:bg-purple-900/30">
                         <svg class="size-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

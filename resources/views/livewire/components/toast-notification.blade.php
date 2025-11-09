@@ -7,14 +7,16 @@ state(['show' => false]);
 state(['message' => '']);
 state(['type' => 'success']); // success, error, info
 
-on(['toast' => function ($data) {
-    $this->message = $data['message'] ?? '';
-    $this->type = $data['type'] ?? 'success';
+$showToast = function ($message, $type = 'success') {
+    $this->message = $message;
+    $this->type = $type;
     $this->show = true;
 
     // Auto-hide after 4 seconds
     $this->dispatch('hide-toast-after-delay');
-}]);
+};
+
+on(['toast' => 'showToast']);
 
 $hide = function () {
     $this->show = false;
