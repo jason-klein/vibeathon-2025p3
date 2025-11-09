@@ -513,7 +513,7 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - [X] Providers are filtered by specialty correctly
 - [X] Distance is calculated and displayed accurately
 - [X] Preferred system providers show availability
-- [ ] Non-preferred providers don't show availability
+- [X] Non-preferred providers don't show availability
 - [X] Clicking availability slot creates appointment with correct data
 - [X] Appointment is linked to scheduling task
 - [X] Scheduling task is marked complete after appointment creation

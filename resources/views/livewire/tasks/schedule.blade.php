@@ -169,7 +169,18 @@ $bookAppointment = function ($providerId, $date, $time) {
 
 ?>
 
-<div class="flex h-full w-full flex-1 flex-col gap-6">
+<div
+    class="flex h-full w-full flex-1 flex-col gap-6"
+    x-data="{
+        init() {
+            window.addEventListener('redirect-after-delay', (event) => {
+                setTimeout(() => {
+                    window.location.href = event.detail;
+                }, 2000);
+            });
+        }
+    }"
+>
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <div>
@@ -368,16 +379,3 @@ $bookAppointment = function ($providerId, $date, $time) {
         </div>
     @endif
 </div>
-
-{{-- Handle redirect after toast --}}
-<div
-    x-data="{
-        init() {
-            window.addEventListener('redirect-after-delay', (event) => {
-                setTimeout(() => {
-                    window.location.href = event.detail;
-                }, 2000);
-            });
-        }
-    }"
-></div>
