@@ -26,6 +26,7 @@ state([
     'taskToComplete' => null,
     'showPreviewModal' => false,
     'previewDocument' => null,
+    'showScheduledBanner' => false,
 ]);
 
 mount(function (string $appointmentId) {
@@ -35,6 +36,9 @@ mount(function (string $appointmentId) {
     $this->authorize('view', $appointment);
 
     $this->patientNotes = $appointment->patient_notes ?? '';
+
+    // Check if arriving from scheduling flow
+    $this->showScheduledBanner = request()->has('scheduled');
 });
 
 $appointment = computed(function () {
@@ -234,6 +238,44 @@ $closePreview = function () {
         <flux:callout variant="success">
             {{ session('success') }}
         </flux:callout>
+    @endif
+
+    {{-- Scheduled Confirmation Banner --}}
+    @if($showScheduledBanner)
+        <div class="rounded-lg border border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-950">
+            <div class="flex items-start gap-4">
+                <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                    <svg class="size-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-green-900 dark:text-green-100">Appointment Scheduled Successfully!</h3>
+                    <div class="mt-4 space-y-2 text-sm">
+                        <div class="flex items-center justify-between border-b border-green-200 pb-2 dark:border-green-800">
+                            <span class="font-medium text-green-700 dark:text-green-300">Confirmation Number</span>
+                            <span class="text-lg font-bold text-green-900 dark:text-green-100">{{ $this->appointment->confirmation_number }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-green-700 dark:text-green-300">Date</span>
+                            <span class="font-medium text-green-900 dark:text-green-100">{{ $this->appointment->date->format('M j, Y') }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-green-700 dark:text-green-300">Time</span>
+                            <span class="font-medium text-green-900 dark:text-green-100">{{ $this->appointment->time->format('g:i A') }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-green-700 dark:text-green-300">Provider</span>
+                            <span class="font-medium text-green-900 dark:text-green-100">{{ $this->appointment->provider->name }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-green-700 dark:text-green-300">Location</span>
+                            <span class="font-medium text-green-900 dark:text-green-100">{{ $this->appointment->location }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 
     {{-- Main Content --}}
@@ -709,88 +751,3 @@ $closePreview = function () {
         </flux:modal>
     @endif
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
-<script>
-    // Configure PDF.js worker
-    if (typeof pdfjsLib !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
-    }
-
-    function pdfViewer(url) {
-        return {
-            pdfDoc: null,
-            currentPage: 1,
-            totalPages: 0,
-            loading: true,
-            url: url,
-
-            async init() {
-                // Wait for PDF.js to be available
-                let attempts = 0;
-                while (typeof pdfjsLib === 'undefined' && attempts < 50) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    attempts++;
-                }
-
-                if (typeof pdfjsLib === 'undefined') {
-                    console.error('PDF.js library failed to load');
-                    this.loading = false;
-                    return;
-                }
-
-                try {
-                    const loadingTask = pdfjsLib.getDocument(this.url);
-                    this.pdfDoc = await loadingTask.promise;
-                    this.totalPages = this.pdfDoc.numPages;
-                    await this.renderPage(this.currentPage);
-                } catch (error) {
-                    console.error('Error loading PDF:', error);
-                    this.loading = false;
-                }
-            },
-
-            async renderPage(pageNum) {
-                if (!this.pdfDoc) {
-                    return;
-                }
-
-                this.loading = true;
-                try {
-                    const page = await this.pdfDoc.getPage(pageNum);
-                    const canvas = this.$refs.canvas;
-                    const context = canvas.getContext('2d');
-
-                    const viewport = page.getViewport({ scale: 1.5 });
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    const renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-
-                    await page.render(renderContext).promise;
-                    this.loading = false;
-                } catch (error) {
-                    console.error('Error rendering page:', error);
-                    this.loading = false;
-                }
-            },
-
-            nextPage() {
-                if (this.currentPage < this.totalPages) {
-                    this.currentPage++;
-                    this.renderPage(this.currentPage);
-                }
-            },
-
-            previousPage() {
-                if (this.currentPage > 1) {
-                    this.currentPage--;
-                    this.renderPage(this.currentPage);
-                }
-            }
-        };
-    }
-</script>

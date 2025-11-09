@@ -210,7 +210,7 @@ $bookAppointment = function ($providerId, $date, $time) {
                             const confirmDelay = Math.floor(Math.random() * 1000) + 2000;
                             this.confirmationDelay = setTimeout(() => {
                                 const appointmentId = $wire.appointmentId;
-                                window.location.href = `/appointments/${appointmentId}`;
+                                window.location.href = `/appointments/${appointmentId}?scheduled=1`;
                             }, confirmDelay);
                         }, 1000);
                     }, delay);
