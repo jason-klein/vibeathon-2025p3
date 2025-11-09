@@ -336,3 +336,396 @@ test('appointment shows today badge for appointments scheduled today', function 
 
     $response->assertSee('Today');
 });
+
+// === APPOINTMENT SHOW/VIEW TESTS ===
+
+test('user can view appointment details', function () {
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Freeman Health System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create([
+        'name' => 'Dr. Sarah Johnson',
+        'specialty' => 'Cardiology',
+    ]);
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+        'time' => '14:30',
+        'location' => '123 Medical Plaza',
+        'summary' => 'Annual checkup',
+        'patient_notes' => 'Feeling good overall',
+    ]);
+
+    $response = $this->actingAs($user)->get("/appointments/{$appointment->id}");
+
+    $response->assertSuccessful();
+    $response->assertSee('Dr. Sarah Johnson');
+    $response->assertSee('Cardiology');
+    $response->assertSee('Freeman Health System');
+    $response->assertSee('123 Medical Plaza');
+    $response->assertSee('Annual checkup');
+    $response->assertSee('Feeling good overall');
+});
+
+test('related tasks display correctly on appointment page', function () {
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    // Add tasks to the appointment
+    $appointment->tasks()->create([
+        'patient_id' => $patient->id,
+        'description' => 'Schedule follow-up MRI',
+        'instructions' => 'Call radiology department',
+        'is_scheduling_task' => false,
+    ]);
+
+    $appointment->tasks()->create([
+        'patient_id' => $patient->id,
+        'description' => 'Pick up prescription',
+        'completed_at' => now(),
+    ]);
+
+    $response = $this->actingAs($user)->get("/appointments/{$appointment->id}");
+
+    $response->assertSuccessful();
+    $response->assertSee('Schedule follow-up MRI');
+    $response->assertSee('Pick up prescription');
+    $response->assertSee('Call radiology department');
+});
+
+test('user can add new task linked to appointment', function () {
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    $this->actingAs($user);
+    Volt::test('appointments.show', ['appointmentId' => $appointment->id])
+        ->set('newTaskDescription', 'Get blood work done')
+        ->set('newTaskInstructions', 'Fast for 12 hours before test')
+        ->call('addTask')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('patient_tasks', [
+        'patient_id' => $patient->id,
+        'patient_appointment_id' => $appointment->id,
+        'description' => 'Get blood work done',
+        'instructions' => 'Fast for 12 hours before test',
+    ]);
+});
+
+test('user can mark tasks as complete from appointment page', function () {
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    $task = $appointment->tasks()->create([
+        'patient_id' => $patient->id,
+        'description' => 'Complete paperwork',
+    ]);
+
+    expect($task->completed_at)->toBeNull();
+
+    $this->actingAs($user);
+    Volt::test('appointments.show', ['appointmentId' => $appointment->id])
+        ->call('toggleTask', $task->id);
+
+    $task->refresh();
+    expect($task->completed_at)->not->toBeNull();
+});
+
+test('user can mark tasks as incomplete from appointment page', function () {
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    $task = $appointment->tasks()->create([
+        'patient_id' => $patient->id,
+        'description' => 'Complete paperwork',
+        'completed_at' => now(),
+    ]);
+
+    expect($task->completed_at)->not->toBeNull();
+
+    $this->actingAs($user);
+    Volt::test('appointments.show', ['appointmentId' => $appointment->id])
+        ->call('toggleTask', $task->id);
+
+    $task->refresh();
+    expect($task->completed_at)->toBeNull();
+});
+
+test('user can edit patient notes in-place', function () {
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+        'patient_notes' => 'Original notes',
+    ]);
+
+    $this->actingAs($user);
+    Volt::test('appointments.show', ['appointmentId' => $appointment->id])
+        ->call('toggleEditNotes')
+        ->assertSet('editingNotes', true)
+        ->set('patientNotes', 'Updated notes with more details')
+        ->call('saveNotes')
+        ->assertHasNoErrors();
+
+    $appointment->refresh();
+    expect($appointment->patient_notes)->toBe('Updated notes with more details');
+});
+
+test('documents display and can be downloaded', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    // Create a fake file
+    Storage::disk('public')->put('test-document.pdf', 'test content');
+
+    $document = $appointment->documents()->create([
+        'file_path' => 'test-document.pdf',
+        'summary' => 'Lab results',
+    ]);
+
+    // Test that document is shown
+    $response = $this->actingAs($user)->get("/appointments/{$appointment->id}");
+    $response->assertSuccessful();
+    $response->assertSee('test-document.pdf');
+
+    // Test download
+    $response = $this->actingAs($user)->get("/appointments/{$appointment->id}/documents/{$document->id}/download");
+    $response->assertSuccessful();
+    $response->assertDownload('test-document.pdf');
+});
+
+test('user cannot view another users appointment', function () {
+    $user1 = User::factory()->create();
+    $user2 = User::factory()->create();
+    $patient2 = $user2->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient2)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    $response = $this->actingAs($user1)->get("/appointments/{$appointment->id}");
+
+    $response->assertForbidden();
+});
+
+// === APPOINTMENT EDIT TESTS ===
+
+test('user can edit existing appointment', function () {
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create([
+        'name' => 'Dr. Original Provider',
+    ]);
+
+    $newProvider = HealthcareProvider::factory()->for($system, 'system')->create([
+        'name' => 'Dr. New Provider',
+    ]);
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+        'time' => '10:00',
+        'location' => 'Original Location',
+        'summary' => 'Original summary',
+        'patient_notes' => 'Original notes',
+    ]);
+
+    $this->actingAs($user);
+    Volt::test('appointments.edit', ['appointmentId' => $appointment->id])
+        ->assertSet('date', $appointment->date->format('Y-m-d'))
+        ->set('time', '14:30')
+        ->set('healthcare_provider_id', $newProvider->id)
+        ->set('location', 'New Location')
+        ->set('summary', 'Updated summary')
+        ->set('patient_notes', 'Updated notes')
+        ->call('update')
+        ->assertRedirect(route('appointments.show', $appointment));
+
+    $appointment->refresh();
+    expect($appointment->healthcare_provider_id)->toBe($newProvider->id);
+    expect($appointment->location)->toBe('New Location');
+    expect($appointment->summary)->toBe('Updated summary');
+    expect($appointment->patient_notes)->toBe('Updated notes');
+});
+
+test('user can remove existing documents when editing appointment', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    Storage::disk('public')->put('old-document.pdf', 'old content');
+    $document = $appointment->documents()->create([
+        'file_path' => 'old-document.pdf',
+    ]);
+
+    $this->actingAs($user);
+    Volt::test('appointments.edit', ['appointmentId' => $appointment->id])
+        ->call('removeExistingDocument', $document->id)
+        ->call('update')
+        ->assertRedirect(route('appointments.show', $appointment));
+
+    $this->assertDatabaseMissing('patient_appointment_documents', [
+        'id' => $document->id,
+    ]);
+
+    Storage::disk('public')->assertMissing('old-document.pdf');
+});
+
+test('user cannot edit another users appointment', function () {
+    $user1 = User::factory()->create();
+    $user2 = User::factory()->create();
+    $patient2 = $user2->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient2)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    $response = $this->actingAs($user1)->get("/appointments/{$appointment->id}/edit");
+
+    $response->assertForbidden();
+});
+
+// === APPOINTMENT DELETE TESTS ===
+
+test('user can delete appointment with confirmation', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    // Add a document that should be deleted
+    Storage::disk('public')->put('document-to-delete.pdf', 'content');
+    $appointment->documents()->create([
+        'file_path' => 'document-to-delete.pdf',
+    ]);
+
+    $this->actingAs($user);
+    Volt::test('appointments.show', ['appointmentId' => $appointment->id])
+        ->call('deleteAppointment')
+        ->assertRedirect(route('appointments.index'));
+
+    $this->assertDatabaseMissing('patient_appointments', [
+        'id' => $appointment->id,
+    ]);
+
+    Storage::disk('public')->assertMissing('document-to-delete.pdf');
+});
+
+test('user cannot delete another users appointment', function () {
+    $user1 = User::factory()->create();
+    $user2 = User::factory()->create();
+    $patient2 = $user2->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient2)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    // User 1 tries to access User 2's appointment - should be forbidden
+    $response = $this->actingAs($user1)->get("/appointments/{$appointment->id}");
+    $response->assertForbidden();
+
+    // Verify appointment still exists
+    $this->assertDatabaseHas('patient_appointments', [
+        'id' => $appointment->id,
+    ]);
+});
+
+test('appointment cards are clickable and link to details page', function () {
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create([
+        'name' => 'Dr. Test Provider',
+    ]);
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    $response = $this->actingAs($user)->get('/appointments');
+
+    $response->assertSuccessful();
+    $response->assertSee('href="'.route('appointments.show', $appointment).'"', false);
+});

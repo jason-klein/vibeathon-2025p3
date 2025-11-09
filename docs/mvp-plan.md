@@ -546,16 +546,16 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - In-place notes editing
 
 **Testing Checklist:**
-- [ ] User can view appointment details
-- [ ] Related tasks display correctly on appointment page
-- [ ] User can add new task linked to appointment
-- [ ] User can mark tasks as complete/incomplete from appointment page
-- [ ] User can edit existing appointment
-- [ ] User can delete appointment (with confirmation)
-- [ ] Patient notes can be edited in-place
-- [ ] Documents display and can be downloaded
-- [ ] Authorization prevents accessing other users' appointments
-- [ ] Feature tests pass for all appointment and task operations
+- [X] User can view appointment details
+- [X] Related tasks display correctly on appointment page
+- [X] User can add new task linked to appointment
+- [X] User can mark tasks as complete/incomplete from appointment page
+- [X] User can edit existing appointment
+- [X] User can delete appointment (with confirmation)
+- [X] Patient notes can be edited in-place
+- [X] Documents display and can be downloaded
+- [X] Authorization prevents accessing other users' appointments
+- [X] Feature tests pass for all appointment and task operations
 
 ---
 

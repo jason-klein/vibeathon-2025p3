@@ -74,7 +74,10 @@ $appointments = computed(function () {
         {{-- Appointments List --}}
         <div class="space-y-4">
             @forelse($this->appointments as $appointment)
-                <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
+                <a
+                    href="{{ route('appointments.show', $appointment) }}"
+                    class="block rounded-xl border border-zinc-200 bg-white p-6 transition-shadow hover:shadow-lg dark:border-zinc-700 dark:bg-zinc-800 dark:hover:shadow-zinc-900/50"
+                >
                     <div class="flex items-start justify-between">
                         <div class="flex-1">
                             <div class="flex items-center gap-3">
@@ -159,7 +162,7 @@ $appointments = computed(function () {
                             @endif
                         </div>
                     </div>
-                </div>
+                </a>
             @empty
                 <div class="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white py-12 dark:border-zinc-700 dark:bg-zinc-800">
                     <svg class="size-16 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
