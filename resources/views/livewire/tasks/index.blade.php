@@ -102,9 +102,10 @@ $toggleComplete = function ($taskId) {
         {{-- Tasks List --}}
         <div class="space-y-3">
             @forelse($this->tasks as $task)
-                <a
-                    href="{{ route('tasks.show', $task) }}"
-                    class="block rounded-xl border border-zinc-200 bg-white p-6 transition-shadow hover:shadow-lg dark:border-zinc-700 dark:bg-zinc-800 dark:hover:shadow-zinc-900/50 {{ $task->completed_at ? 'opacity-75' : '' }}"
+                <div
+                    wire:key="task-{{ $task->id }}"
+                    onclick="window.location.href='{{ route('tasks.show', $task) }}'"
+                    class="block cursor-pointer rounded-xl border border-zinc-200 bg-white p-6 transition-shadow hover:shadow-lg dark:border-zinc-700 dark:bg-zinc-800 dark:hover:shadow-zinc-900/50 {{ $task->completed_at ? 'opacity-75' : '' }}"
                 >
                     <div class="flex items-start gap-4">
                         {{-- Checkbox --}}
@@ -195,7 +196,7 @@ $toggleComplete = function ($taskId) {
                             </div>
                         </div>
                     </div>
-                </a>
+                </div>
             @empty
                 <div class="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white py-12 dark:border-zinc-700 dark:bg-zinc-800">
                     <svg class="size-16 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
