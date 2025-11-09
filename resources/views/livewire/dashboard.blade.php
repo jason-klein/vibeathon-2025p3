@@ -25,8 +25,33 @@ state(['patient' => function () {
 state(['upcomingAppointmentsCount' => fn () => Auth::user()->patient?->appointments()->where('date', '>=', today())->count() ?? 0]);
 state(['activeTasksCount' => fn () => Auth::user()->patient?->tasks()->whereNull('completed_at')->count() ?? 0]);
 
-$communityEvents = computed(function () {
+$personalizedFeed = computed(function () {
     $patient = $this->patient;
+    $feed = collect();
+
+    // Get upcoming appointments
+    if ($patient) {
+        $upcomingAppointments = $patient->appointments()
+            ->with('provider.system')
+            ->where('date', '>=', today())
+            ->orderBy('date')
+            ->orderBy('time')
+            ->limit(10)
+            ->get();
+
+        foreach ($upcomingAppointments as $appointment) {
+            $feed->push([
+                'type' => 'appointment',
+                'id' => $appointment->id,
+                'date' => $appointment->date,
+                'time' => $appointment->time,
+                'title' => $appointment->provider?->name ?? 'No provider assigned',
+                'subtitle' => $appointment->provider?->specialty,
+                'location' => $appointment->location,
+                'model' => $appointment,
+            ]);
+        }
+    }
 
     // Get all future community events
     $events = CommunityEvent::with('partner')
@@ -82,7 +107,28 @@ $communityEvents = computed(function () {
         }
     }
 
-    return $events->take(5);
+    foreach ($events->take(10) as $event) {
+        $feed->push([
+            'type' => 'event',
+            'id' => $event->id,
+            'date' => $event->date,
+            'time' => $event->time,
+            'title' => $event->partner->name,
+            'subtitle' => Str::limit($event->description, 120),
+            'location' => $event->location,
+            'model' => $event,
+        ]);
+    }
+
+    // Sort by date and time
+    return $feed->sortBy(function ($item) {
+        $dateTime = $item['date']->format('Y-m-d');
+        if ($item['time']) {
+            $dateTime .= ' '.$item['time']->format('H:i');
+        }
+
+        return $dateTime;
+    })->take(10)->values();
 });
 
 $calculateDistance = function ($appointment) {
@@ -313,49 +359,114 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
         {{-- Divider --}}
         <div class="border-t border-zinc-200 dark:border-zinc-700"></div>
 
-        {{-- Community Events Feed --}}
+        {{-- Personalized Feed --}}
         <div class="rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
             <div class="border-b border-zinc-200 p-6 dark:border-zinc-700">
-                <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Community Events</h2>
-                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Events recommended based on your health interests</p>
+                <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Personalized Feed</h2>
+                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Your upcoming appointments and recommended community events</p>
             </div>
             <div class="p-6">
-                @if($this->communityEvents->count() > 0)
+                @if($this->personalizedFeed->count() > 0)
                     <div class="space-y-4">
-                        @foreach($this->communityEvents as $event)
-                            <a href="{{ route('events.show', $event->id) }}" class="block rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:hover:border-zinc-600">
-                                <div class="flex items-start justify-between">
-                                    <div class="flex-1">
-                                        <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ $event->partner->name }}</p>
-                                        <p class="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{{ Str::limit($event->description, 120) }}</p>
-                                        <div class="mt-2 flex flex-wrap items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
-                                            <span class="flex items-center gap-1">
-                                                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
-                                                {{ $event->date->format('M j, Y') }}
-                                            </span>
-                                            @if($event->time)
+                        @foreach($this->personalizedFeed as $item)
+                            @if($item['type'] === 'appointment')
+                                {{-- Appointment Item --}}
+                                <a href="{{ route('appointments.show', $item['id']) }}" class="block rounded-lg border-2 border-green-200 bg-green-50 p-4 transition hover:border-green-300 hover:shadow-sm dark:border-green-800 dark:bg-green-900/20 dark:hover:border-green-700">
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
+                                            <svg class="size-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-400">
+                                                    Appointment
+                                                </span>
+                                            </div>
+                                            <p class="mt-1 font-medium text-zinc-900 dark:text-zinc-100">{{ $item['title'] }}</p>
+                                            @if($item['subtitle'])
+                                                <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $item['subtitle'] }}</p>
+                                            @endif
+                                            <div class="mt-2 flex flex-wrap items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
                                                 <span class="flex items-center gap-1">
                                                     <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                     </svg>
-                                                    {{ \Carbon\Carbon::parse($event->time)->format('g:i A') }}
+                                                    {{ $item['date']->format('M j, Y') }}
                                                 </span>
-                                            @endif
-                                            @if($event->location)
-                                                <span class="flex items-center gap-1">
-                                                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    </svg>
-                                                    {{ $event->location }}
-                                                </span>
-                                            @endif
+                                                @if($item['time'])
+                                                    <span class="flex items-center gap-1">
+                                                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                        </svg>
+                                                        {{ \Carbon\Carbon::parse($item['time'])->format('g:i A') }}
+                                                    </span>
+                                                @endif
+                                                @php
+                                                    $distance = $this->calculateDistance($item['model']);
+                                                @endphp
+                                                @if($distance !== null)
+                                                    <span class="flex items-center gap-1">
+                                                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                        </svg>
+                                                        {{ $this->formatDistance($distance) }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </a>
+                                </a>
+                            @else
+                                {{-- Community Event Item --}}
+                                <a href="{{ route('events.show', $item['id']) }}" class="block rounded-lg border-2 border-purple-200 bg-purple-50 p-4 transition hover:border-purple-300 hover:shadow-sm dark:border-purple-800 dark:bg-purple-900/20 dark:hover:border-purple-700">
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/40">
+                                            <svg class="size-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/40 dark:text-purple-400">
+                                                    Community Event
+                                                </span>
+                                            </div>
+                                            <p class="mt-1 font-medium text-zinc-900 dark:text-zinc-100">{{ $item['title'] }}</p>
+                                            @if($item['subtitle'])
+                                                <p class="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{{ $item['subtitle'] }}</p>
+                                            @endif
+                                            <div class="mt-2 flex flex-wrap items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
+                                                <span class="flex items-center gap-1">
+                                                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                    {{ $item['date']->format('M j, Y') }}
+                                                </span>
+                                                @if($item['time'])
+                                                    <span class="flex items-center gap-1">
+                                                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                        </svg>
+                                                        {{ \Carbon\Carbon::parse($item['time'])->format('g:i A') }}
+                                                    </span>
+                                                @endif
+                                                @if($item['location'])
+                                                    <span class="flex items-center gap-1">
+                                                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                        </svg>
+                                                        {{ $item['location'] }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endif
                         @endforeach
                     </div>
                 @else
@@ -363,8 +474,8 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                         <svg class="mx-auto size-12 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
-                        <p class="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">No events available</p>
-                        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Check back soon for community health events</p>
+                        <p class="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">No upcoming activities</p>
+                        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Check back soon for appointments and community events</p>
                     </div>
                 @endif
             </div>

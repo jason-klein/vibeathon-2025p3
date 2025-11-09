@@ -68,7 +68,8 @@ test('dashboard displays community events', function () {
 
     $page = $this->actingAs($user)->visit('/dashboard');
 
-    $page->assertSee('Community Events')
+    $page->assertSee('Personalized Feed')
+        ->assertSee('Community Event')
         ->assertSee('Health Partners')
         ->assertNoJavascriptErrors();
 });

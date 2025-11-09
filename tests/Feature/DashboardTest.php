@@ -128,7 +128,8 @@ test('dashboard displays community events feed', function () {
     $response = $this->actingAs($user)->get('/dashboard');
 
     $response->assertSuccessful();
-    $response->assertSee('Community Events');
+    $response->assertSee('Personalized Feed');
+    $response->assertSee('Community Event');
     $response->assertSee('Health Alliance');
     $response->assertSee('Free diabetes screening');
     $response->assertSee('Community Center');
@@ -174,7 +175,7 @@ test('dashboard shows empty states when no data available', function () {
     $response->assertSuccessful();
     $response->assertSee('No upcoming appointments');
     $response->assertSee('No active tasks');
-    $response->assertSee('No events available');
+    $response->assertSee('No upcoming activities');
 });
 
 test('dashboard limits upcoming appointments to 3', function () {
