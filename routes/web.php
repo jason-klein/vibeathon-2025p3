@@ -18,6 +18,10 @@ Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Volt::route('timeline', 'timeline')
+    ->middleware(['auth', 'verified'])
+    ->name('timeline');
+
 Route::middleware(['auth'])->group(function () {
     // Patient features
     Volt::route('appointments', 'appointments.index')

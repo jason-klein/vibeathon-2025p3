@@ -632,17 +632,17 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Responsive timeline design
 
 **Testing Checklist:**
-- [ ] Timeline page loads for authenticated user at `/timeline`
-- [ ] Plain English Patient Record displays at top
-- [ ] Last updated timestamp shows correctly
-- [ ] Past appointments display in reverse chronological order
-- [ ] Future appointments are NOT shown on timeline
-- [ ] Visit summaries display correctly
-- [ ] Attached documents are shown with download links
-- [ ] Related tasks display for each encounter
-- [ ] Timeline works on mobile devices
-- [ ] User can only access their own timeline
-- [ ] Feature tests pass
+- [X] Timeline page loads for authenticated user at `/timeline`
+- [X] Plain English Patient Record displays at top
+- [X] Last updated timestamp shows correctly
+- [X] Past appointments display in reverse chronological order
+- [X] Future appointments are NOT shown on timeline
+- [X] Visit summaries display correctly
+- [X] Attached documents are shown with download links
+- [X] Related tasks display for each encounter
+- [X] Timeline works on mobile devices
+- [X] User can only access their own timeline
+- [X] Feature tests pass
 
 ---
 
