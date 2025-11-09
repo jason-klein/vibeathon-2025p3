@@ -38,12 +38,43 @@ class DatabaseSeeder extends Seeder
             'is_preferred' => false,
         ]);
 
-        // Create healthcare providers with Joplin, MO coordinates
-        HealthcareProvider::factory()->count(15)->create([
+        // Define all specialties
+        $specialties = [
+            'Family Medicine',
+            'Cardiology',
+            'Orthopedics',
+            'Endocrinology',
+            'Pulmonology',
+            'Radiology',
+            'Physical Therapy',
+            'Dermatology',
+            'Neurology',
+            'Gastroenterology',
+        ];
+
+        // Create at least one provider per specialty in the preferred system
+        foreach ($specialties as $specialty) {
+            HealthcareProvider::factory()->create([
+                'healthcare_system_id' => $preferredSystem->id,
+                'specialty' => $specialty,
+            ]);
+        }
+
+        // Create at least one provider per specialty in a non-preferred system (Mercy)
+        foreach ($specialties as $specialty) {
+            HealthcareProvider::factory()->create([
+                'healthcare_system_id' => 2,
+                'specialty' => $specialty,
+            ]);
+        }
+
+        // Add additional random providers to preferred system
+        HealthcareProvider::factory()->count(5)->create([
             'healthcare_system_id' => $preferredSystem->id,
         ]);
 
-        HealthcareProvider::factory()->count(10)->create([
+        // Add additional random providers to non-preferred systems
+        HealthcareProvider::factory()->count(5)->create([
             'healthcare_system_id' => 2,
         ]);
 
