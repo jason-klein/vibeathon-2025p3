@@ -35,7 +35,7 @@ mount(function (string $appointmentId) {
 
 $appointment = computed(function () {
     return PatientAppointment::with(['provider.system', 'documents', 'tasks' => function ($query) {
-        $query->orderBy('completed_at', 'asc')->orderBy('created_at', 'desc');
+        $query->with(['appointment.provider', 'scheduledAppointment'])->orderBy('completed_at', 'asc')->orderBy('created_at', 'desc');
     }])
         ->findOrFail($this->appointmentId);
 });
@@ -334,11 +334,17 @@ $downloadDocument = function (int $documentId) {
                 @if($this->appointment->tasks->count() > 0)
                     <div class="space-y-3">
                         @foreach($this->appointment->tasks as $task)
-                            <div class="flex items-start gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-600">
-                                <flux:checkbox
-                                    wire:click="toggleTask({{ $task->id }})"
-                                    :checked="$task->completed_at !== null"
-                                />
+                            <div
+                                wire:key="task-{{ $task->id }}"
+                                onclick="window.location.href='{{ route('tasks.show', $task) }}'"
+                                class="flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-200 p-3 transition-shadow hover:shadow-md dark:border-zinc-600 dark:hover:shadow-zinc-900/50"
+                            >
+                                <div onclick="event.stopPropagation()">
+                                    <flux:checkbox
+                                        wire:click="toggleTask({{ $task->id }})"
+                                        :checked="$task->completed_at !== null"
+                                    />
+                                </div>
                                 <div class="flex-1">
                                     <p class="font-medium {{ $task->completed_at ? 'text-zinc-500 line-through dark:text-zinc-400' : 'text-zinc-900 dark:text-zinc-100' }}">
                                         {{ $task->description }}
@@ -348,8 +354,58 @@ $downloadDocument = function (int $documentId) {
                                             {{ $task->instructions }}
                                         </p>
                                     @endif
+
+                                    {{-- Task Meta --}}
+                                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                                        @if($task->is_scheduling_task)
+                                            <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                <svg class="mr-1 size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                Scheduling Task
+                                            </span>
+                                        @endif
+
+                                        @if($task->provider_specialty_needed)
+                                            <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                                {{ $task->provider_specialty_needed }}
+                                            </span>
+                                        @endif
+
+                                        @if($task->is_scheduling_task && !$task->scheduledAppointment)
+                                            <a href="{{ route('tasks.schedule', $task->id) }}" onclick="event.stopPropagation()" class="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
+                                                <svg class="-ml-0.5 mr-1.5 size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                Schedule
+                                            </a>
+                                        @endif
+
+                                        @if($task->appointment && $task->appointment->id !== $this->appointment->id)
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
+                                                <svg class="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                @if($task->appointment->provider)
+                                                    {{ $task->appointment->provider->name }} - {{ $task->appointment->date->format('M j, Y') }}
+                                                @else
+                                                    Appointment on {{ $task->appointment->date->format('M j, Y') }}
+                                                @endif
+                                            </span>
+                                        @endif
+
+                                        @if($task->scheduledAppointment)
+                                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                <svg class="mr-1 size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                                Appointment Scheduled
+                                            </span>
+                                        @endif
+                                    </div>
+
                                     @if($task->completed_at)
-                                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                                             Completed {{ $task->completed_at->diffForHumans() }}
                                         </p>
                                     @endif
