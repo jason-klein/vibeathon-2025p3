@@ -58,6 +58,13 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        // Production stack with daily rotation and error-only logging
+        'production' => [
+            'driver' => 'stack',
+            'channels' => ['daily', 'slack'],
+            'ignore_exceptions' => false,
+        ],
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
