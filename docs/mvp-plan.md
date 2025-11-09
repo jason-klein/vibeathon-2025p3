@@ -363,12 +363,12 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 
 **Testing Checklist:**
 - [X] Dashboard loads for authenticated user
-- [ ] Upcoming appointments display correctly (max 3) with distance
-- [ ] Pending tasks display correctly
-- [ ] Scheduling tasks show "Schedule" button
-- [ ] Executive Summary card displays between tasks and feed
-- [ ] Executive Summary card is clickable and links to `/timeline`
-- [ ] Distance calculation works correctly
+- [X] Upcoming appointments display correctly (max 3) with distance
+- [X] Pending tasks display correctly
+- [X] Scheduling tasks show "Schedule" button
+- [X] Executive Summary card displays between tasks and feed
+- [X] Executive Summary card is clickable and links to `/timeline`
+- [X] Distance calculation works correctly
 - [ ] Event feed shows relevant events
 - [ ] "View All" buttons navigate correctly
 - [ ] Mobile layout works properly
