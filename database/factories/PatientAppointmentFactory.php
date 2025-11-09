@@ -17,7 +17,11 @@ class PatientAppointmentFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'date' => fake()->dateTimeBetween('now', '+1 year')->format('Y-m-d'),
+            'time' => fake()->time('H:i'),
+            'location' => fake()->address(),
+            'summary' => fake()->sentence(),
+            'patient_notes' => null,
         ];
     }
 }

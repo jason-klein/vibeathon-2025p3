@@ -21,6 +21,9 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('appointments', 'appointments.index')
         ->name('appointments.index');
 
+    Volt::route('appointments/create', 'appointments.create')
+        ->name('appointments.create');
+
     Volt::route('tasks', 'tasks.index')
         ->name('tasks.index');
 

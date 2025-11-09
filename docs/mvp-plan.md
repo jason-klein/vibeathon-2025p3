@@ -457,13 +457,13 @@ Managing your health appointments, tasks, and resources shouldn't be overwhelmin
 - Form validation
 
 **Testing Checklist:**
-- [ ] User can view all their appointments
-- [ ] User can create new appointment with required fields
-- [ ] Past appointments require provider and notes
-- [ ] File upload works correctly
+- [X] User can view all their appointments
+- [X] User can create new appointment with required fields
+- [X] Past appointments require provider and notes
+- [X] File upload works correctly
 - [ ] Validation errors display properly
-- [ ] User can only see their own appointments
-- [ ] Feature tests pass
+- [X] User can only see their own appointments
+- [X] Feature tests pass
 
 ---
 

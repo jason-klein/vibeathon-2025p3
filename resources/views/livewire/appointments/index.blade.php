@@ -42,6 +42,9 @@ $appointments = computed(function () {
                 <h1 class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">My Appointments</h1>
                 <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Manage your healthcare appointments</p>
             </div>
+            <flux:button variant="primary" href="{{ route('appointments.create') }}" icon="plus">
+                Add Appointment
+            </flux:button>
         </div>
 
         {{-- Filter Tabs --}}
