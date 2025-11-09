@@ -50,6 +50,26 @@ Route::middleware(['auth'])->group(function () {
         return Storage::disk('public')->download($document->file_path);
     })->name('appointments.documents.download');
 
+    Route::get('appointments/{appointment}/documents/{document}/preview', function (\App\Models\PatientAppointment $appointment, \App\Models\PatientAppointmentDocument $document) {
+        Gate::authorize('view', $appointment);
+
+        if ($document->patient_appointment_id !== $appointment->id) {
+            abort(404);
+        }
+
+        if (! Storage::disk('public')->exists($document->file_path)) {
+            abort(404, 'File not found');
+        }
+
+        $filePath = Storage::disk('public')->path($document->file_path);
+        $mimeType = Storage::disk('public')->mimeType($document->file_path);
+
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="'.basename($document->file_path).'"',
+        ]);
+    })->name('appointments.documents.preview');
+
     Volt::route('tasks', 'tasks.index')
         ->name('tasks.index');
 

@@ -543,6 +543,166 @@ test('documents display and can be downloaded', function () {
     $response->assertDownload('test-document.pdf');
 });
 
+test('user can preview PDF document', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    Storage::disk('public')->put('test-preview.pdf', 'PDF content');
+
+    $document = $appointment->documents()->create([
+        'file_path' => 'test-preview.pdf',
+    ]);
+
+    $response = $this->actingAs($user)->get("/appointments/{$appointment->id}/documents/{$document->id}/preview");
+
+    $response->assertSuccessful();
+    $response->assertHeader('Content-Type', 'application/pdf');
+    $response->assertHeader('Content-Disposition', 'inline; filename="test-preview.pdf"');
+});
+
+test('user can preview image document', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    // Create a fake image file
+    $imageContent = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+    Storage::disk('public')->put('test-image.png', $imageContent);
+
+    $document = $appointment->documents()->create([
+        'file_path' => 'test-image.png',
+    ]);
+
+    $response = $this->actingAs($user)->get("/appointments/{$appointment->id}/documents/{$document->id}/preview");
+
+    $response->assertSuccessful();
+    $response->assertHeader('Content-Type', 'image/png');
+});
+
+test('user cannot preview another users document', function () {
+    Storage::fake('public');
+
+    $user1 = User::factory()->create();
+    $user2 = User::factory()->create();
+    $patient2 = $user2->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient2)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    Storage::disk('public')->put('private-document.pdf', 'private content');
+
+    $document = $appointment->documents()->create([
+        'file_path' => 'private-document.pdf',
+    ]);
+
+    $response = $this->actingAs($user1)->get("/appointments/{$appointment->id}/documents/{$document->id}/preview");
+
+    $response->assertForbidden();
+});
+
+test('preview returns 404 for non-existent document', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    $document = $appointment->documents()->create([
+        'file_path' => 'non-existent.pdf',
+    ]);
+
+    $response = $this->actingAs($user)->get("/appointments/{$appointment->id}/documents/{$document->id}/preview");
+
+    $response->assertNotFound();
+});
+
+test('preview modal opens when preview button clicked', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    Storage::disk('public')->put('modal-test.pdf', 'content');
+
+    $document = $appointment->documents()->create([
+        'file_path' => 'modal-test.pdf',
+    ]);
+
+    $this->actingAs($user);
+    Volt::test('appointments.show', ['appointmentId' => $appointment->id])
+        ->call('openPreview', $document->id)
+        ->assertSet('showPreviewModal', true)
+        ->assertSet('previewDocument.id', $document->id);
+});
+
+test('preview modal closes when close button clicked', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $patient = $user->patient;
+
+    $system = HealthcareSystem::factory()->create(['name' => 'Test Healthcare System']);
+    $provider = HealthcareProvider::factory()->for($system, 'system')->create();
+
+    $appointment = PatientAppointment::factory()->for($patient)->create([
+        'healthcare_provider_id' => $provider->id,
+        'date' => now()->addDays(7),
+    ]);
+
+    Storage::disk('public')->put('close-test.pdf', 'content');
+
+    $document = $appointment->documents()->create([
+        'file_path' => 'close-test.pdf',
+    ]);
+
+    $this->actingAs($user);
+    Volt::test('appointments.show', ['appointmentId' => $appointment->id])
+        ->call('openPreview', $document->id)
+        ->assertSet('showPreviewModal', true)
+        ->call('closePreview')
+        ->assertSet('showPreviewModal', false)
+        ->assertSet('previewDocument', null);
+});
+
 test('user cannot view another users appointment', function () {
     $user1 = User::factory()->create();
     $user2 = User::factory()->create();

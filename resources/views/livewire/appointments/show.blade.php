@@ -24,6 +24,8 @@ state([
     'showDeleteModal' => false,
     'showSchedulingTaskConfirmation' => false,
     'taskToComplete' => null,
+    'showPreviewModal' => false,
+    'previewDocument' => null,
 ]);
 
 mount(function (string $appointmentId) {
@@ -186,6 +188,21 @@ $downloadDocument = function (int $documentId) {
     }
 
     return Storage::disk('public')->download($document->file_path);
+};
+
+$openPreview = function (int $documentId) {
+    $this->previewDocument = $this->appointment->documents->firstWhere('id', $documentId);
+
+    if (!$this->previewDocument) {
+        abort(404);
+    }
+
+    $this->showPreviewModal = true;
+};
+
+$closePreview = function () {
+    $this->showPreviewModal = false;
+    $this->previewDocument = null;
 };
 
 ?>
@@ -488,10 +505,7 @@ $downloadDocument = function (int $documentId) {
                     <div class="space-y-4">
                         @foreach($this->appointment->documents as $document)
                             <div class="rounded-lg border border-zinc-200 dark:border-zinc-600">
-                                <a
-                                    href="{{ route('appointments.documents.download', ['appointment' => $this->appointment, 'document' => $document]) }}"
-                                    class="flex items-center gap-3 p-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
-                                >
+                                <div class="flex items-center gap-3 p-3">
                                     <svg class="size-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                                     </svg>
@@ -500,10 +514,25 @@ $downloadDocument = function (int $documentId) {
                                             {{ basename($document->file_path) }}
                                         </p>
                                     </div>
-                                    <svg class="size-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                    </svg>
-                                </a>
+                                    <div class="flex items-center gap-2">
+                                        <flux:button
+                                            wire:click="openPreview({{ $document->id }})"
+                                            variant="ghost"
+                                            size="sm"
+                                            icon="eye"
+                                        >
+                                            Preview
+                                        </flux:button>
+                                        <flux:button
+                                            href="{{ route('appointments.documents.download', ['appointment' => $this->appointment, 'document' => $document]) }}"
+                                            variant="ghost"
+                                            size="sm"
+                                            icon="arrow-down-tray"
+                                        >
+                                            Download
+                                        </flux:button>
+                                    </div>
+                                </div>
                                 @if($document->summary)
                                     <div class="border-t border-zinc-200 bg-zinc-50 px-3 py-3 dark:border-zinc-600 dark:bg-zinc-800/50">
                                         <div class="mb-1 flex items-center gap-1.5">
@@ -621,4 +650,147 @@ $downloadDocument = function (int $documentId) {
             </div>
         </div>
     </flux:modal>
+
+    {{-- Document Preview Modal --}}
+    @if($previewDocument)
+        <flux:modal wire:model="showPreviewModal" name="document-preview" class="!max-w-[95vw] !w-[95vw]">
+            <div class="space-y-4">
+                <div>
+                    <flux:heading size="lg">{{ basename($previewDocument->file_path) }}</flux:heading>
+                    <flux:subheading>Document Preview</flux:subheading>
+                </div>
+
+                <div class="rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+                    @php
+                        $extension = strtolower(pathinfo($previewDocument->file_path, PATHINFO_EXTENSION));
+                        $previewUrl = route('appointments.documents.preview', ['appointment' => $this->appointment, 'document' => $previewDocument]);
+                    @endphp
+
+                    @if(in_array($extension, ['jpg', 'jpeg', 'png']))
+                        {{-- Image Preview --}}
+                        <div class="flex items-center justify-center p-4" style="height: 65vh;">
+                            <img
+                                src="{{ $previewUrl }}"
+                                alt="{{ basename($previewDocument->file_path) }}"
+                                class="max-h-full w-auto rounded-lg"
+                            />
+                        </div>
+                    @elseif($extension === 'pdf')
+                        {{-- PDF Preview with iframe --}}
+                        <div class="w-full" style="height: 65vh;">
+                            <iframe
+                                src="{{ $previewUrl }}"
+                                class="h-full w-full rounded-lg border-0"
+                                title="{{ basename($previewDocument->file_path) }}"
+                            ></iframe>
+                        </div>
+                    @else
+                        <div class="flex items-center justify-center p-8">
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                                Preview not available for this file type.
+                            </p>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="flex items-center justify-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                    <flux:button type="button" variant="ghost" wire:click="closePreview">
+                        Close
+                    </flux:button>
+                    <flux:button
+                        href="{{ route('appointments.documents.download', ['appointment' => $this->appointment, 'document' => $previewDocument]) }}"
+                        variant="primary"
+                        icon="arrow-down-tray"
+                    >
+                        Download
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
+    @endif
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
+<script>
+    // Configure PDF.js worker
+    if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+    }
+
+    function pdfViewer(url) {
+        return {
+            pdfDoc: null,
+            currentPage: 1,
+            totalPages: 0,
+            loading: true,
+            url: url,
+
+            async init() {
+                // Wait for PDF.js to be available
+                let attempts = 0;
+                while (typeof pdfjsLib === 'undefined' && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+
+                if (typeof pdfjsLib === 'undefined') {
+                    console.error('PDF.js library failed to load');
+                    this.loading = false;
+                    return;
+                }
+
+                try {
+                    const loadingTask = pdfjsLib.getDocument(this.url);
+                    this.pdfDoc = await loadingTask.promise;
+                    this.totalPages = this.pdfDoc.numPages;
+                    await this.renderPage(this.currentPage);
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    this.loading = false;
+                }
+            },
+
+            async renderPage(pageNum) {
+                if (!this.pdfDoc) {
+                    return;
+                }
+
+                this.loading = true;
+                try {
+                    const page = await this.pdfDoc.getPage(pageNum);
+                    const canvas = this.$refs.canvas;
+                    const context = canvas.getContext('2d');
+
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+
+                    await page.render(renderContext).promise;
+                    this.loading = false;
+                } catch (error) {
+                    console.error('Error rendering page:', error);
+                    this.loading = false;
+                }
+            },
+
+            nextPage() {
+                if (this.currentPage < this.totalPages) {
+                    this.currentPage++;
+                    this.renderPage(this.currentPage);
+                }
+            },
+
+            previousPage() {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.renderPage(this.currentPage);
+                }
+            }
+        };
+    }
+</script>
