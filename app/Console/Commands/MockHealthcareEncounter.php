@@ -72,12 +72,15 @@ class MockHealthcareEncounter extends Command
         $scenarios = $this->getEncounterScenarios();
         $scenario = $scenarios[array_rand($scenarios)];
 
+        // Get a healthcare provider for the appointment
+        $provider = \App\Models\HealthcareProvider::inRandomOrder()->first();
+
         $appointment = PatientAppointment::create([
             'patient_id' => $patient->id,
+            'healthcare_provider_id' => $provider?->id,
             'date' => $visitDate->toDateString(),
             'time' => '10:00:00',
-            'partner' => 'Dr. Sarah Mitchell',
-            'location' => 'Joplin Family Medicine, 2301 McClelland Blvd, Joplin, MO 64804',
+            'location' => $provider?->location ?? 'Joplin Family Medicine, 2301 McClelland Blvd, Joplin, MO 64804',
             'summary' => $scenario['summary'],
             'patient_notes' => $scenario['patient_notes'],
         ]);
@@ -102,10 +105,10 @@ class MockHealthcareEncounter extends Command
         // Create follow-up appointment
         PatientAppointment::create([
             'patient_id' => $patient->id,
+            'healthcare_provider_id' => $provider?->id,
             'date' => now()->addWeeks(4)->toDateString(),
             'time' => '14:00:00',
-            'partner' => 'Dr. Sarah Mitchell',
-            'location' => 'Joplin Family Medicine, 2301 McClelland Blvd, Joplin, MO 64804',
+            'location' => $provider?->location ?? 'Joplin Family Medicine, 2301 McClelland Blvd, Joplin, MO 64804',
             'summary' => 'Follow-up visit',
         ]);
 
@@ -164,8 +167,8 @@ class MockHealthcareEncounter extends Command
     protected function generateVisitSummaryPdf(PatientAppointment $appointment, array $scenario): void
     {
         $pdf = Pdf::loadView('pdf.visit-summary', [
-            'providerName' => $appointment->partner,
-            'providerSpecialty' => 'Family Medicine',
+            'providerName' => $appointment->provider?->name ?? 'Dr. Sarah Mitchell',
+            'providerSpecialty' => $appointment->provider?->specialty ?? 'Family Medicine',
             'providerLocation' => $appointment->location,
             'patientName' => $appointment->patient->user->name,
             'visitDate' => $appointment->date->format('F d, Y'),

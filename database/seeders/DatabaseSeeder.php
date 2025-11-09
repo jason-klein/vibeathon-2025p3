@@ -7,6 +7,7 @@ use App\Models\HealthcareSystem;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,14 +16,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create test user with patient record
+        // Create test user (patient record auto-created by UserFactory)
         $user = User::factory()->withoutTwoFactor()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-        ]);
-
-        Patient::factory()->create([
-            'user_id' => $user->id,
         ]);
 
         // Create healthcare systems
@@ -58,6 +55,11 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CommunityPartnerSeeder::class,
             CommunityEventSeeder::class,
+        ]);
+
+        // Generate mock healthcare encounter for test user
+        Artisan::call('mock:healthcare-encounter', [
+            'patient_id' => $user->patient->id,
         ]);
     }
 }
