@@ -22,6 +22,7 @@ class PatientAppointment extends Model
         'patient_notes',
         'scheduled_from_task_id',
         'executive_summary',
+        'confirmation_number',
     ];
 
     protected function casts(): array
@@ -30,6 +31,25 @@ class PatientAppointment extends Model
             'date' => 'date',
             'time' => 'datetime:H:i',
         ];
+    }
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (PatientAppointment $appointment) {
+            if (empty($appointment->confirmation_number)) {
+                $appointment->confirmation_number = self::generateConfirmationNumber();
+            }
+        });
+    }
+
+    public static function generateConfirmationNumber(?string $timestamp = null): string
+    {
+        $time = $timestamp ?? now()->format('Y-m-d H:i:s.u');
+        $hash = strtoupper(substr(md5($time), 0, 6));
+
+        return "APT-{$hash}";
     }
 
     public function patient(): BelongsTo

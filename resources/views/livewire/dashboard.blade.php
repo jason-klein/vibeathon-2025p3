@@ -281,9 +281,16 @@ $formatDistance = fn ($distance) => DistanceCalculator::format($distance);
                                 <a href="{{ route('appointments.show', $appointment->id) }}" class="block rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:hover:border-zinc-600">
                                     <div class="flex items-start justify-between">
                                         <div class="flex-1">
-                                            <p class="font-medium text-zinc-900 dark:text-zinc-100">
-                                                {{ $appointment->provider?->name ?? 'No provider assigned' }}
-                                            </p>
+                                            <div class="flex items-center gap-2">
+                                                <p class="font-medium text-zinc-900 dark:text-zinc-100">
+                                                    {{ $appointment->provider?->name ?? 'No provider assigned' }}
+                                                </p>
+                                                @if($appointment->confirmation_number)
+                                                    <span class="inline-flex items-center rounded-md bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                        {{ $appointment->confirmation_number }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                             @if($appointment->provider?->specialty)
                                                 <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $appointment->provider->specialty }}</p>
                                             @endif

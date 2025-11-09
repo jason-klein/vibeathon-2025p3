@@ -17,6 +17,9 @@ title('Schedule Appointment');
 
 state(['taskId' => null]);
 state(['selectedProviderId' => null]);
+state(['isScheduling' => false]);
+state(['schedulingStep' => 'scheduling']); // 'scheduling' or 'success'
+state(['confirmedAppointment' => null]);
 
 mount(function ($taskId) {
     $this->taskId = $taskId;
@@ -141,7 +144,11 @@ $bookAppointment = function ($providerId, $date, $time) {
     $task = $this->task;
     $patient = $this->patient;
 
-    // Create the appointment
+    // Show scheduling modal
+    $this->isScheduling = true;
+    $this->schedulingStep = 'scheduling';
+
+    // Create the appointment immediately (visual delay handled in frontend)
     $appointment = $patient->appointments()->create([
         'healthcare_provider_id' => $provider->id,
         'date' => $date,
@@ -156,15 +163,19 @@ $bookAppointment = function ($providerId, $date, $time) {
         'completed_at' => now(),
     ]);
 
-    // Format the appointment date and time for display
-    $appointmentDate = \Carbon\Carbon::parse($date)->format('M j, Y');
-    $appointmentTime = \Carbon\Carbon::parse($time)->format('g:i A');
+    // Store appointment details for modal display
+    $this->confirmedAppointment = [
+        'confirmation_number' => $appointment->confirmation_number,
+        'date' => \Carbon\Carbon::parse($date)->format('M j, Y'),
+        'time' => \Carbon\Carbon::parse($time)->format('g:i A'),
+        'provider_name' => $provider->name,
+        'location' => $provider->location,
+    ];
+};
 
-    // Show success toast
-    $this->dispatch('toast', "Appointment scheduled for {$appointmentDate} at {$appointmentTime} with {$provider->name}", 'success');
-
-    // Redirect after a short delay to allow toast to be seen
-    $this->dispatch('redirect-after-delay', route('appointments.index'));
+$closeModal = function () {
+    $this->isScheduling = false;
+    $this->redirect(route('appointments.index'));
 };
 
 ?>
@@ -172,11 +183,17 @@ $bookAppointment = function ($providerId, $date, $time) {
 <div
     class="flex h-full w-full flex-1 flex-col gap-6"
     x-data="{
+        schedulingDelay: null,
         init() {
-            window.addEventListener('redirect-after-delay', (event) => {
-                setTimeout(() => {
-                    window.location.href = event.detail;
-                }, 2000);
+            // Watch for when scheduling starts
+            this.$watch('$wire.isScheduling', (value) => {
+                if (value && $wire.schedulingStep === 'scheduling') {
+                    // Random delay between 3-5 seconds (3000-5000ms)
+                    const delay = Math.floor(Math.random() * 2000) + 3000;
+                    this.schedulingDelay = setTimeout(() => {
+                        $wire.schedulingStep = 'success';
+                    }, delay);
+                }
             });
         }
     }"
@@ -378,4 +395,64 @@ $bookAppointment = function ($providerId, $date, $time) {
             </p>
         </div>
     @endif
+
+    {{-- Scheduling Confirmation Modal --}}
+    <flux:modal wire:model="isScheduling" class="min-w-[400px]">
+        @if($schedulingStep === 'scheduling')
+            {{-- Scheduling State --}}
+            <div class="flex flex-col items-center justify-center p-8">
+                <div class="mb-4">
+                    <svg class="size-16 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Scheduling your appointment...</h3>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Please wait a moment</p>
+            </div>
+        @else
+            {{-- Success State --}}
+            <div class="flex flex-col items-center justify-center p-8">
+                <div class="mb-4">
+                    <div class="flex size-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                        <svg class="size-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Appointment Scheduled!</h3>
+
+                @if($confirmedAppointment)
+                    <div class="mt-6 w-full space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+                        <div class="flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-700">
+                            <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Confirmation Number</span>
+                            <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ $confirmedAppointment['confirmation_number'] }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-zinc-600 dark:text-zinc-400">Date</span>
+                            <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $confirmedAppointment['date'] }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-zinc-600 dark:text-zinc-400">Time</span>
+                            <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $confirmedAppointment['time'] }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-zinc-600 dark:text-zinc-400">Provider</span>
+                            <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $confirmedAppointment['provider_name'] }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-zinc-600 dark:text-zinc-400">Location</span>
+                            <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $confirmedAppointment['location'] }}</span>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="mt-6 w-full">
+                    <flux:button wire:click="closeModal" variant="primary" class="w-full">
+                        View Appointments
+                    </flux:button>
+                </div>
+            </div>
+        @endif
+    </flux:modal>
 </div>

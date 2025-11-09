@@ -11,7 +11,7 @@ use Livewire\Volt\Volt;
 
 uses(RefreshDatabase::class);
 
-test('booking appointment dispatches toast with correct format', function () {
+test('booking appointment creates appointment and shows scheduling modal', function () {
     $user = User::factory()->create();
     $patient = $user->patient;
 
@@ -30,7 +30,8 @@ test('booking appointment dispatches toast with correct format', function () {
     $this->actingAs($user);
     Volt::test('tasks.schedule', ['taskId' => $task->id])
         ->call('bookAppointment', $provider->id, '2025-12-01', '10:00:00')
-        ->assertDispatched('toast')
+        ->assertSet('isScheduling', true)
+        ->assertSet('schedulingStep', 'scheduling')
         ->assertHasNoErrors();
 
     // Verify appointment was created
@@ -40,6 +41,11 @@ test('booking appointment dispatches toast with correct format', function () {
     expect($appointment->healthcare_provider_id)->toBe($provider->id);
     expect($appointment->date->format('Y-m-d'))->toBe('2025-12-01');
     expect($appointment->time->format('H:i:s'))->toBe('10:00:00');
+
+    // Verify confirmation number was generated
+    expect($appointment->confirmation_number)->not->toBeNull();
+    expect($appointment->confirmation_number)->toStartWith('APT-');
+    expect(strlen($appointment->confirmation_number))->toBe(10); // APT- + 6 chars
 
     // Verify task was marked as completed
     $task->refresh();

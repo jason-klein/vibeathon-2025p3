@@ -194,6 +194,11 @@ $deleteTask = function () {
                                         {{ $this->task->scheduledAppointment->provider->name }}
                                     </p>
                                 @endif
+                                @if($this->task->scheduledAppointment->confirmation_number)
+                                    <p class="mt-1 text-xs font-medium text-green-700 dark:text-green-300">
+                                        {{ $this->task->scheduledAppointment->confirmation_number }}
+                                    </p>
+                                @endif
                             </div>
                             <svg class="size-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>

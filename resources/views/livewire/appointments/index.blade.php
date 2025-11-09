@@ -102,6 +102,11 @@ $appointments = computed(function () {
                                 <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                                     {{ $appointment->provider?->name ?? 'No provider assigned' }}
                                 </h3>
+                                @if($appointment->confirmation_number)
+                                    <span class="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                        {{ $appointment->confirmation_number }}
+                                    </span>
+                                @endif
                                 @if($appointment->date < today())
                                     <span class="inline-flex items-center rounded-full bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
                                         Past

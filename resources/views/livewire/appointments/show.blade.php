@@ -243,6 +243,23 @@ $downloadDocument = function (int $documentId) {
                 </div>
 
                 <div class="space-y-4">
+                    {{-- Confirmation Number --}}
+                    @if($this->appointment->confirmation_number)
+                        <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/30">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <svg class="size-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-blue-900 dark:text-blue-100">Confirmation Number</p>
+                                        <p class="text-lg font-bold text-blue-700 dark:text-blue-300">{{ $this->appointment->confirmation_number }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Date & Time --}}
                     <div class="flex items-start gap-3">
                         <svg class="size-5 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
