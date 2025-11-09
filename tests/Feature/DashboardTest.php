@@ -202,3 +202,60 @@ test('dashboard limits upcoming appointments to 3', function () {
     $response->assertSuccessful();
     $response->assertSee('5'); // The count in stats card
 });
+
+test('dashboard shows diverse community events including wellness activities', function () {
+    $user = User::factory()->create();
+    $patient = Patient::factory()->for($user)->create();
+
+    // Create a past appointment with wellness recommendations
+    PatientAppointment::factory()->for($patient)->create([
+        'date' => now()->subMonths(2),
+        'summary' => 'Discussed lifestyle modifications including community runs and farmers markets for heart health',
+    ]);
+
+    // Create a wellness task
+    PatientTask::factory()->for($patient)->create([
+        'description' => 'Research local wellness activities - farmers markets and running groups',
+        'instructions' => 'Explore farmers markets for fresh produce and community running events',
+        'completed_at' => null,
+    ]);
+
+    // Create different types of community events
+    $bloodPartner = CommunityPartner::factory()->create(['name' => 'Community Blood Center']);
+    $marketPartner = CommunityPartner::factory()->create(['name' => 'Joplin Empire Market']);
+    $runPartner = CommunityPartner::factory()->create(['name' => 'Joplin RoadRunners']);
+
+    // Multiple blood drive events
+    CommunityEvent::factory()->for($bloodPartner, 'partner')->create([
+        'description' => 'Whole Blood Donation Drive',
+        'date' => now()->addDays(5),
+    ]);
+    CommunityEvent::factory()->for($bloodPartner, 'partner')->create([
+        'description' => 'Whole Blood Donation Drive',
+        'date' => now()->addDays(10),
+    ]);
+
+    // Farmers market event
+    $marketEvent = CommunityEvent::factory()->for($marketPartner, 'partner')->create([
+        'description' => 'Weekly farmers market with fresh local produce',
+        'date' => now()->addDays(7),
+    ]);
+
+    // Running event
+    $runEvent = CommunityEvent::factory()->for($runPartner, 'partner')->create([
+        'description' => 'Community 5K run for heart health',
+        'date' => now()->addDays(14),
+    ]);
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertSuccessful();
+
+    // Should see blood drives (matches "blood" keyword from medical history)
+    $response->assertSee('Community Blood Center');
+
+    // Should also see diverse events from wellness recommendations
+    $response->assertSee('Joplin Empire Market');
+    $response->assertSee('farmers market');
+    $response->assertSee('Joplin RoadRunners');
+});

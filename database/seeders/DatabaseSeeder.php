@@ -160,7 +160,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Appointment 4: Family Medicine Follow-up (~6 months ago) - Lifestyle check
-        PatientAppointment::create([
+        $appointment4 = PatientAppointment::create([
             'patient_id' => $patient->id,
             'healthcare_provider_id' => $familyMedicineProvider?->id,
             'date' => now()->subMonths(6)->toDateString(),
@@ -168,6 +168,13 @@ class DatabaseSeeder extends Seeder
             'location' => $familyMedicineProvider?->location ?? 'Freeman Health System, 932 E 34th St, Joplin, MO 64804',
             'summary' => 'Follow-up visit for blood pressure and lifestyle modifications',
             'patient_notes' => 'Blood pressure improved to 128/82. Lost 8 lbs. Feeling better overall.',
+        ]);
+
+        $this->generateVisitSummaryPdf($appointment4, [
+            'chief_complaint' => 'Routine follow-up for cardiovascular health',
+            'assessment' => "Patient showing excellent progress with lifestyle modifications.\n\nBlood pressure: 128/82 (improved from 138/88)\nWeight loss: 8 lbs over 5 months\nExercise tolerance: Improved\n\nDiscussed sustainable lifestyle changes for long-term cardiovascular health:\n- Recommended participation in community wellness activities\n- Suggested joining local running groups or walking clubs for social exercise (Walk With A Doc, community 5Ks)\n- Encouraged shopping at farmers markets for fresh produce and heart-healthy nutrition\n- Emphasized importance of regular physical activity: 30 minutes daily\n\nPatient expressed interest in exploring local wellness events and community fitness opportunities.\n\nPlan:\n- Continue current medications\n- Maintain healthy lifestyle with community engagement\n- Follow-up in 2 months",
+            'instructions' => 'Continue Metoprolol 25mg daily. Explore local community runs, walking groups, and farmers markets. Aim for 30 minutes of moderate exercise daily. Monitor blood pressure weekly.',
+            'referrals' => [],
         ]);
 
         // Appointment 5: Cardiology Check-up (~4 months ago) - Continued monitoring
@@ -243,6 +250,17 @@ class DatabaseSeeder extends Seeder
             'instructions' => 'Urgent evaluation for new chest symptoms, possible repeat stress test or cardiac catheterization',
             'is_scheduling_task' => true,
             'provider_specialty_needed' => 'Cardiology',
+            'completed_at' => null,
+        ]);
+
+        // Task 3: Research local wellness activities (from appointment 4 recommendations)
+        PatientTask::create([
+            'patient_id' => $patient->id,
+            'patient_appointment_id' => $appointment4->id,
+            'description' => 'Research local community wellness activities - farmers markets and running groups',
+            'instructions' => 'Explore local farmers markets for fresh produce and community running/walking events (5Ks, Walk With A Doc) for heart-healthy exercise',
+            'is_scheduling_task' => false,
+            'provider_specialty_needed' => null,
             'completed_at' => null,
         ]);
 

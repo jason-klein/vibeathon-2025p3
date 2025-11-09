@@ -116,12 +116,12 @@ $personalizedFeed = computed(function () {
         }
     }
 
-    // Get all future community events
+    // Get all future community events (fetch more for better diversity)
     $events = CommunityEvent::with('partner')
         ->where('date', '>=', today())
         ->orderBy('date')
         ->orderBy('time')
-        ->limit(10)
+        ->limit(50)
         ->get();
 
     // Basic filtering based on appointment summaries and task descriptions
@@ -145,13 +145,16 @@ $personalizedFeed = computed(function () {
             if ($task->description) {
                 $keywords = $keywords->merge(str_word_count(strtolower($task->description), 1));
             }
+            if ($task->instructions) {
+                $keywords = $keywords->merge(str_word_count(strtolower($task->instructions), 1));
+            }
         }
 
         // Filter out common words
         $commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'from', 'by', 'of', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can'];
         $keywords = $keywords->filter(fn ($word) => strlen($word) > 3 && ! in_array($word, $commonWords))->unique();
 
-        // Filter events based on keywords
+        // Filter events based on keywords and promote diversity
         if ($keywords->isNotEmpty()) {
             $filteredEvents = $events->filter(function ($event) use ($keywords) {
                 $eventText = strtolower($event->description.' '.$event->partner->name);
@@ -164,9 +167,27 @@ $personalizedFeed = computed(function () {
                 return false;
             });
 
-            // If we found matching events, use them; otherwise show all events
+            // Show a diverse mix: prioritize matched events but include variety
             if ($filteredEvents->isNotEmpty()) {
-                $events = $filteredEvents;
+                // Group matched events by partner to ensure diversity
+                $matchedByPartner = $filteredEvents->groupBy('community_partner_id');
+                $diverseMatches = collect();
+
+                // Take max 2 events from each matching partner for diversity
+                foreach ($matchedByPartner as $partnerEvents) {
+                    $diverseMatches = $diverseMatches->merge($partnerEvents->take(2));
+                }
+
+                // If we have fewer than 8 diverse matches, add some non-matched events for discovery
+                if ($diverseMatches->count() < 8) {
+                    $nonMatchedEvents = $events->reject(function ($event) use ($filteredEvents) {
+                        return $filteredEvents->contains('id', $event->id);
+                    })->take(8 - $diverseMatches->count());
+
+                    $events = $diverseMatches->merge($nonMatchedEvents);
+                } else {
+                    $events = $diverseMatches;
+                }
             }
         }
     }
