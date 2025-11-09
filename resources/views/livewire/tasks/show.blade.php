@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\PatientTask;
-use Illuminate\Support\Facades\Auth;
 
 use function Livewire\Volt\computed;
 use function Livewire\Volt\layout;
@@ -203,9 +202,15 @@ $deleteTask = function () {
                     </div>
                 @elseif($this->task->is_scheduling_task && !$this->task->completed_at)
                     <div class="border-t border-zinc-200 pt-4 dark:border-zinc-700">
-                        <flux:button variant="primary" href="{{ route('tasks.schedule', $this->task) }}" icon="calendar">
+                        <a
+                            href="{{ route('tasks.schedule', $this->task) }}"
+                            class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:bg-green-600 dark:hover:bg-green-700"
+                        >
+                            <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
                             Schedule Appointment
-                        </flux:button>
+                        </a>
                     </div>
                 @endif
 

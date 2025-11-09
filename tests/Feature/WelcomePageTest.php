@@ -6,11 +6,11 @@ test('public homepage displays correctly', function () {
     $response->assertStatus(200);
 });
 
-test('homepage shows ReferHarmony branding and messaging', function () {
+test('homepage shows Harmony branding and messaging', function () {
     $response = $this->get('/');
 
-    $response->assertSee('ReferHarmony')
-        ->assertSee('Bridging Care with Clarity and Confidence')
+    $response->assertSee('Harmony')
+        ->assertSee('Your Healthcare Concierge')
         ->assertSee('Your Healthcare Journey, Simplified')
         ->assertSee('Track all your healthcare appointments in one place')
         ->assertSee('Never miss important health tasks and follow-ups')
