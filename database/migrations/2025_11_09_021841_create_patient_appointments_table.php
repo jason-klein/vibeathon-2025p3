@@ -14,13 +14,15 @@ return new class extends Migration
         Schema::create('patient_appointments', static function (Blueprint $table) {
             $table->id();
             $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('healthcare_provider_id')->nullable()->after('patient_id')->constrained()->nullOnDelete();
+            $table->foreignId('healthcare_provider_id')->nullable()->constrained()->nullOnDelete();
             $table->date('date');
             $table->time('time')->nullable();
             $table->string('location')->nullable();
             $table->text('summary')->nullable();
             $table->text('patient_notes')->nullable();
+            $table->text('executive_summary')->nullable();
             $table->foreignId('scheduled_from_task_id')->nullable()->constrained('patient_tasks')->nullOnDelete();
+            $table->string('confirmation_number')->nullable()->index();
             $table->timestamps();
         });
     }

@@ -17,7 +17,10 @@ return new class extends Migration
             $table->date('date');
             $table->time('time')->nullable();
             $table->string('location')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->text('description');
+            $table->string('link')->nullable();
             $table->boolean('is_partner_provided')->default(false);
             $table->timestamps();
         });
