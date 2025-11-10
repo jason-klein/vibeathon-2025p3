@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\HealthcareSystem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -37,6 +38,7 @@ class HealthcareProviderFactory extends Factory
         ];
 
         return [
+            'healthcare_system_id' => HealthcareSystem::factory(),
             'name' => fake()->name(),
             'specialty' => fake()->randomElement($specialties),
             'location' => fake()->streetAddress().', Joplin, MO '.fake()->numberBetween(64801, 64804),

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\HealthcareProvider;
 use App\Models\Patient;
 use App\Models\PatientAppointment;
 use App\Models\User;
@@ -111,13 +112,14 @@ test('command creates follow-up appointment', function () {
 test('command can update existing appointment', function () {
     $user = User::factory()->create();
     $patient = Patient::factory()->create(['user_id' => $user->id]);
+    $provider = HealthcareProvider::factory()->create();
 
     // Create a future appointment
     $futureAppointment = PatientAppointment::create([
         'patient_id' => $patient->id,
+        'healthcare_provider_id' => $provider->id,
         'date' => now()->addWeeks(2)->toDateString(),
         'time' => '10:00:00',
-        'partner' => 'Dr. Test',
         'location' => 'Test Location',
     ]);
 
