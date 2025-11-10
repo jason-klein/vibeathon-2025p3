@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('summary')->nullable();
             $table->text('patient_notes')->nullable();
             $table->text('executive_summary')->nullable();
-            $table->foreignId('scheduled_from_task_id')->nullable()->constrained('patient_tasks')->nullOnDelete();
+            $table->unsignedBigInteger('scheduled_from_task_id')->nullable();
             $table->string('confirmation_number')->nullable()->index();
             $table->timestamps();
         });
@@ -32,10 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('patient_appointments', function (Blueprint $table) {
-            $table->dropForeign(['healthcare_provider_id']);
-            $table->dropColumn('healthcare_provider_id');
-        });
         Schema::dropIfExists('patient_appointments');
     }
 };
