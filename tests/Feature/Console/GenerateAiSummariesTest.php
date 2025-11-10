@@ -25,6 +25,11 @@ beforeEach(function () {
 test('command processes documents, appointments, and patients synchronously by default', function () {
     $user = User::factory()->create();
     $patient = $user->patient;
+    $patient->update([
+        'executive_summary' => null,
+        'plain_english_record' => null,
+    ]);
+
     $appointment = PatientAppointment::factory()
         ->for($patient)
         ->create(['date' => now()->subDay()]);
@@ -182,6 +187,10 @@ test('command regenerates all summaries when --force flag is provided', function
 test('command filters by patient ID when --patient-id is provided', function () {
     $user1 = User::factory()->create();
     $patient1 = $user1->patient;
+    $patient1->update([
+        'executive_summary' => null,
+        'plain_english_record' => null,
+    ]);
     $appointment1 = PatientAppointment::factory()->for($patient1)->create(['date' => now()->subDay()]);
     $document1 = PatientAppointmentDocument::withoutEvents(function () use ($appointment1) {
         return PatientAppointmentDocument::factory()
@@ -265,6 +274,10 @@ test('command processes tables in correct order', function () {
 test('command continues processing on errors and reports them', function () {
     $user = User::factory()->create();
     $patient = $user->patient;
+    $patient->update([
+        'executive_summary' => null,
+        'plain_english_record' => null,
+    ]);
     $appointment = PatientAppointment::factory()->for($patient)->create();
 
     $document1 = PatientAppointmentDocument::withoutEvents(function () use ($appointment) {

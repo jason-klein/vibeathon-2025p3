@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use function Pest\Laravel\artisan;
 
 beforeEach(function () {
-    Storage::fake('local');
+    Storage::fake('public');
 
     // Mock the AI summary service to avoid requiring OpenAI API key
     $this->mock(AiSummaryService::class, function ($mock) {
@@ -69,7 +69,7 @@ test('command generates PDF documents', function () {
     $document = $pastAppointment->documents()->first();
     expect($document)->not->toBeNull()
         ->and($document->file_path)->toContain('appointment_docs/')
-        ->and(Storage::exists($document->file_path))->toBeTrue();
+        ->and(Storage::disk('public')->exists($document->file_path))->toBeTrue();
 });
 
 test('command creates referral tasks', function () {
@@ -147,9 +147,9 @@ test('PDF document contains required information', function () {
     $document = $pastAppointment->documents()->first();
 
     expect($document)->not->toBeNull()
-        ->and(Storage::exists($document->file_path))->toBeTrue();
+        ->and(Storage::disk('public')->exists($document->file_path))->toBeTrue();
 
     // Verify the PDF was created (file size > 0)
-    $fileSize = Storage::size($document->file_path);
+    $fileSize = Storage::disk('public')->size($document->file_path);
     expect($fileSize)->toBeGreaterThan(0);
 });
