@@ -75,6 +75,10 @@ test('command queues jobs when --queue flag is provided', function () {
 
     $user = User::factory()->create();
     $patient = $user->patient;
+    $patient->update([
+        'executive_summary' => null,
+        'plain_english_record' => null,
+    ]);
     $appointment = PatientAppointment::factory()
         ->for($patient)
         ->create();
@@ -232,6 +236,10 @@ test('command filters by patient ID when --patient-id is provided', function () 
 test('command processes tables in correct order', function () {
     $user = User::factory()->create();
     $patient = $user->patient;
+    $patient->update([
+        'executive_summary' => null,
+        'plain_english_record' => null,
+    ]);
     $appointment = PatientAppointment::factory()->for($patient)->create(['date' => now()->subDay()]);
     $document = PatientAppointmentDocument::withoutEvents(function () use ($appointment) {
         return PatientAppointmentDocument::factory()
